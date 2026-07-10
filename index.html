@@ -267,8 +267,26 @@
     return date.toLocaleDateString('en-US', options);
   }
 
+  // Global Visits state
+  let globalVisits = {};
+
+  async function fetchGlobalVisits() {
+    try {
+      const res = await fetch('/api/visits');
+      if (res.ok) {
+        globalVisits = await res.json();
+        filterAndSortTools();
+      }
+    } catch (e) {
+      console.warn("Global analytics unavailable, using local storage fallback.", e);
+    }
+  }
+
   // Visit counting & Last used system
   function getVisitCount(path) {
+    if (globalVisits && globalVisits[path] !== undefined) {
+      return globalVisits[path];
+    }
     return parseInt(localStorage.getItem(`visits_${path}`) || '0', 10);
   }
 
@@ -277,9 +295,17 @@
   }
 
   function incrementVisit(path) {
-    const current = getVisitCount(path);
+    // 1. Increment locally
+    const current = parseInt(localStorage.getItem(`visits_${path}`) || '0', 10);
     localStorage.setItem(`visits_${path}`, current + 1);
     localStorage.setItem(`last_used_${path}`, new Date().toISOString());
+
+    // 2. Increment globally via Cloudflare Pages Function
+    fetch('/api/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path })
+    }).catch(err => console.warn("Failed to report global visit count", err));
   }
 
   function renderTools(filteredTools) {
@@ -382,8 +408,9 @@
   searchInput.addEventListener('input', filterAndSortTools);
   sortSelect.addEventListener('change', filterAndSortTools);
 
-  // Initial draw
+  // Initial draw & fetch
   filterAndSortTools();
+  fetchGlobalVisits();
   </script>
 </body>
 </html>
