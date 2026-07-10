@@ -3,7 +3,8 @@
    Provides typography, interactive element styles, and auto dark/light modes.
 */
 
-:root {
+:root,
+:root.theme-light {
   /* Light Theme Variables */
   --bg-page: oklch(0.98 0.005 240);
   --bg-surface: oklch(1.0 0 0);
@@ -23,7 +24,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.theme-light) {
     /* Dark Theme Variables */
     --bg-page: oklch(0.14 0.01 240);
     --bg-surface: oklch(0.18 0.01 240);
@@ -39,6 +40,23 @@
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   }
+}
+
+:root.theme-dark {
+  /* Forced Dark Theme Variables */
+  --bg-page: oklch(0.14 0.01 240);
+  --bg-surface: oklch(0.18 0.01 240);
+  --text-primary: oklch(0.92 0.005 240);
+  --text-secondary: oklch(0.7 0.01 240);
+  --accent: oklch(0.65 0.16 250);
+  --accent-hover: oklch(0.72 0.14 250);
+  --accent-bg-subtle: oklch(0.22 0.02 250);
+  --border-color: oklch(0.24 0.01 240);
+  --input-bg: oklch(0.16 0.01 240);
+  --input-border: oklch(0.26 0.01 240);
+  --input-focus: oklch(0.65 0.16 250 / 0.25);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
 }
 
 /* Base Reset */

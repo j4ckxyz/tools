@@ -1,4 +1,4 @@
-# Jack's Tools (tools.j4ck.xyz)
+# Browser Tools (tools.j4ck.xyz)
 
 A collection of miscellaneous, self-contained HTML + CSS + JavaScript tools built with the help of LLM agents. Runs entirely in the browser, hosted statically on Cloudflare Pages.
 
