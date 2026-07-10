@@ -270,11 +270,18 @@ function cleanString(str) {
   return str.replace(/[\r\n]+/g, ' ').trim();
 }
 
+function decodeHtml(html) {
+  if (!html) return '';
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+}
+
 function generateAltTextParagraph(tweet) {
   const user = tweet.user;
   const displayName = user.name || user.screen_name;
   const handle = user.screen_name;
-  const postText = cleanString(tweet.text || '');
+  const postText = cleanString(decodeHtml(tweet.text || ''));
 
   let text = `Twitter post by ${displayName} (@${handle})`;
   if (postText) {
@@ -286,9 +293,9 @@ function generateAltTextParagraph(tweet) {
   // Extract link card details
   if (tweet.card && tweet.card.binding_values) {
     const bindingValues = tweet.card.binding_values;
-    const title = cleanString(getCardValue(bindingValues, 'title', 'string'));
-    const desc = cleanString(getCardValue(bindingValues, 'description', 'string'));
-    const domain = cleanString(getCardValue(bindingValues, 'domain', 'string'));
+    const title = cleanString(decodeHtml(getCardValue(bindingValues, 'title', 'string')));
+    const desc = cleanString(decodeHtml(getCardValue(bindingValues, 'description', 'string')));
+    const domain = cleanString(decodeHtml(getCardValue(bindingValues, 'domain', 'string')));
     const cardUrl = getCardValue(bindingValues, 'card_url', 'string');
 
     if (title) {
@@ -310,12 +317,12 @@ function generateAltTextParagraph(tweet) {
     tweet.mediaDetails.forEach((media, idx) => {
       const typeLabel = media.type === 'video' ? 'Video' : media.type === 'animated_gif' ? 'GIF' : 'Image';
       if (media.ext_alt_text) {
-        mediaAlts.push(`${typeLabel} ${idx + 1} alt text: "${cleanString(media.ext_alt_text)}"`);
-      } else {
-        mediaAlts.push(`${typeLabel} ${idx + 1} has no alt text`);
+        mediaAlts.push(`${typeLabel} ${idx + 1} alt text: "${cleanString(decodeHtml(media.ext_alt_text))}"`);
       }
     });
-    text += `. Attached media (${tweet.mediaDetails.length} item${tweet.mediaDetails.length > 1 ? 's' : ''}): ${mediaAlts.join(', ')}`;
+    if (mediaAlts.length > 0) {
+      text += `. Attached media (${tweet.mediaDetails.length} item${tweet.mediaDetails.length > 1 ? 's' : ''}): ${mediaAlts.join(', ')}`;
+    }
   }
 
   // Extract quote tweets details
@@ -324,7 +331,7 @@ function generateAltTextParagraph(tweet) {
     const qUser = qTweet.user;
     const qDisplayName = qUser.name || qUser.screen_name;
     const qHandle = qUser.screen_name;
-    const qText = cleanString(qTweet.text || '');
+    const qText = cleanString(decodeHtml(qTweet.text || ''));
 
     text += `. Quoting a post by ${qDisplayName} (@${qHandle})`;
     if (qText) {
@@ -338,7 +345,7 @@ function generateAltTextParagraph(tweet) {
       qTweet.mediaDetails.forEach((media, idx) => {
         const typeLabel = media.type === 'video' ? 'Video' : media.type === 'animated_gif' ? 'GIF' : 'Image';
         if (media.ext_alt_text) {
-          qMediaAlts.push(`Quoted ${typeLabel.toLowerCase()} ${idx + 1} alt text: "${cleanString(media.ext_alt_text)}"`);
+          qMediaAlts.push(`Quoted ${typeLabel.toLowerCase()} ${idx + 1} alt text: "${cleanString(decodeHtml(media.ext_alt_text))}"`);
         }
       });
       if (qMediaAlts.length > 0) {
@@ -359,7 +366,7 @@ function displayPostPreview(tweet) {
   authorAvatar.src = user.profile_image_url_https || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
   authorName.textContent = user.name || user.screen_name;
   authorHandle.textContent = `@${user.screen_name}`;
-  postTextContent.textContent = tweet.text || '';
+  postTextContent.textContent = decodeHtml(tweet.text || '');
 
   // Reset media preview grid
   mediaGrid.innerHTML = '';
