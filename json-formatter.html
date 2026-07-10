@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Formatter & Validator — Jack's Tools</title>
+  <meta name="description" content="Format, beautify, minify, and validate JSON data instantly in your browser with real-time linting.">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Common CSS -->
+  <link rel="stylesheet" href="common.css">
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+  /* Tool-specific styles */
+  .editor-textarea {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 14px !important;
+    height: 450px;
+    tab-size: 4;
+  }
+  .status-banner {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  .status-valid {
+    background-color: oklch(0.92 0.1 140 / 0.1);
+    color: oklch(0.6 0.15 140);
+    border: 1px solid oklch(0.6 0.15 140 / 0.2);
+  }
+  @media (prefers-color-scheme: dark) {
+    .status-valid {
+      background-color: oklch(0.25 0.1 140 / 0.2);
+      color: oklch(0.75 0.1 140);
+    }
+  }
+  .status-invalid {
+    background-color: oklch(0.92 0.1 20 / 0.1);
+    color: oklch(0.6 0.15 20);
+    border: 1px solid oklch(0.6 0.15 20 / 0.2);
+  }
+  @media (prefers-color-scheme: dark) {
+    .status-invalid {
+      background-color: oklch(0.25 0.1 20 / 0.2);
+      color: oklch(0.75 0.1 20);
+    }
+  }
+  .status-empty {
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+  }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header-custom">
+    <div class="header-inner">
+      <a href="index.html" class="header-brand">
+        <i class="bi bi-arrow-left"></i> JSON Formatter & Validator
+      </a>
+      <span class="text-muted-custom fs-7">tools.j4ck.xyz</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container-custom">
+    <div class="mb-4">
+      <h2>JSON Formatter & Validator</h2>
+      <p class="text-muted-custom">Format, parse, and validate JSON data instantly with real-time error indicators.</p>
+    </div>
+
+    <!-- Status Banner -->
+    <div id="status-banner" class="status-banner status-empty">
+      <i id="status-icon" class="bi bi-info-circle"></i>
+      <span id="status-text">Enter some JSON below to validate and format.</span>
+    </div>
+
+    <div class="row g-4">
+      <!-- Input Section -->
+      <div class="col-lg-6">
+        <div class="card-custom h-100 mb-0">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <label class="mb-0" for="json-input">Input JSON</label>
+            <div class="d-flex gap-2">
+              <button id="btn-sample" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">Load Sample</button>
+              <button id="btn-clear" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">Clear</button>
+            </div>
+          </div>
+          <textarea id="json-input" class="editor-textarea" placeholder="Paste your raw JSON here..."></textarea>
+        </div>
+      </div>
+
+      <!-- Output Section -->
+      <div class="col-lg-6">
+        <div class="card-custom h-100 mb-0">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <label class="mb-0" for="json-output">Output</label>
+            <div class="d-flex gap-2">
+              <button id="btn-copy" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">
+                <i class="bi bi-copy"></i> Copy
+              </button>
+              <button id="btn-download" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">
+                <i class="bi bi-download"></i> Download
+              </button>
+            </div>
+          </div>
+          <textarea id="json-output" class="editor-textarea" readonly placeholder="Formatted output will appear here..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar / Operations -->
+    <div class="card-custom mt-4">
+      <label class="mb-2">Formatting Options</label>
+      <div class="d-flex flex-wrap gap-2">
+        <button id="btn-format-2" class="btn-custom btn-custom-primary">
+          <i class="bi bi-indent"></i> Format 2-Spaces
+        </button>
+        <button id="btn-format-4" class="btn-custom btn-custom-primary">
+          <i class="bi bi-list"></i> Format 4-Spaces
+        </button>
+        <button id="btn-minify" class="btn-custom btn-custom-secondary">
+          <i class="bi bi-distribute-horizontal"></i> Minify / Compact
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+  const jsonInput = document.getElementById('json-input');
+  const jsonOutput = document.getElementById('json-output');
+  const statusBanner = document.getElementById('status-banner');
+  const statusIcon = document.getElementById('status-icon');
+  const statusText = document.getElementById('status-text');
+
+  const btnSample = document.getElementById('btn-sample');
+  const btnClear = document.getElementById('btn-clear');
+  const btnCopy = document.getElementById('btn-copy');
+  const btnDownload = document.getElementById('btn-download');
+  const btnFormat2 = document.getElementById('btn-format-2');
+  const btnFormat4 = document.getElementById('btn-format-4');
+  const btnMinify = document.getElementById('btn-minify');
+
+  const SAMPLE_JSON = `{
+  "name": "Jack's Tools",
+  "version": "1.0.0",
+  "description": "Lightweight client-side utilities.",
+  "features": [
+    "Vanilla JS",
+    "Tailored CSS styling",
+    "Fully offline capable",
+    "Self-contained"
+  ],
+  "author": {
+    "name": "Jack",
+    "website": "https://tools.j4ck.xyz"
+  },
+  "active": true,
+  "views_count": 9999
+}`;
+
+  function updateStatus(type, message) {
+    statusBanner.className = 'status-banner';
+    if (type === 'valid') {
+      statusBanner.classList.add('status-valid');
+      statusIcon.className = 'bi bi-check-circle-fill';
+      statusText.textContent = message || 'Valid JSON';
+    } else if (type === 'invalid') {
+      statusBanner.classList.add('status-invalid');
+      statusIcon.className = 'bi bi-exclamation-triangle-fill';
+      statusText.textContent = message;
+    } else {
+      statusBanner.classList.add('status-empty');
+      statusIcon.className = 'bi bi-info-circle';
+      statusText.textContent = message || 'Enter some JSON below to validate and format.';
+    }
+  }
+
+  function validateAndFormat(space = 2) {
+    const val = jsonInput.value.trim();
+    if (!val) {
+      jsonOutput.value = '';
+      updateStatus('empty');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(val);
+      const formatted = JSON.stringify(parsed, null, space);
+      jsonOutput.value = formatted;
+      updateStatus('valid', 'Valid JSON! Automatically formatted.');
+    } catch (e) {
+      jsonOutput.value = '';
+      updateStatus('invalid', `Invalid JSON: ${e.message}`);
+    }
+  }
+
+  function minifyJSON() {
+    const val = jsonInput.value.trim();
+    if (!val) {
+      jsonOutput.value = '';
+      updateStatus('empty');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(val);
+      const minified = JSON.stringify(parsed);
+      jsonOutput.value = minified;
+      updateStatus('valid', 'Valid JSON! Minified successfully.');
+    } catch (e) {
+      jsonOutput.value = '';
+      updateStatus('invalid', `Invalid JSON: ${e.message}`);
+    }
+  }
+
+  // Event Listeners
+  jsonInput.addEventListener('input', () => {
+    validateAndFormat(2);
+  });
+
+  btnSample.addEventListener('click', () => {
+    jsonInput.value = SAMPLE_JSON;
+    validateAndFormat(2);
+  });
+
+  btnClear.addEventListener('click', () => {
+    jsonInput.value = '';
+    jsonOutput.value = '';
+    updateStatus('empty');
+    jsonInput.focus();
+  });
+
+  btnCopy.addEventListener('click', async () => {
+    const text = jsonOutput.value;
+    if (!text) return;
+    
+    try {
+      await navigator.clipboard.writeText(text);
+      const originalText = btnCopy.innerHTML;
+      btnCopy.innerHTML = '<i class="bi bi-check"></i> Copied!';
+      setTimeout(() => {
+        btnCopy.innerHTML = originalText;
+      }, 2000);
+    } catch (err) {
+      alert('Failed to copy text: ' + err);
+    }
+  });
+
+  btnDownload.addEventListener('click', () => {
+    const text = jsonOutput.value;
+    if (!text) return;
+
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'formatted.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  btnFormat2.addEventListener('click', () => {
+    validateAndFormat(2);
+  });
+
+  btnFormat4.addEventListener('click', () => {
+    validateAndFormat(4);
+  });
+
+  btnMinify.addEventListener('click', () => {
+    minifyJSON();
+  });
+  </script>
+</body>
+</html>

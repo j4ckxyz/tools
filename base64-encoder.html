@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 Encoder & Decoder — Jack's Tools</title>
+  <meta name="description" content="Encode and decode text or files to and from Base64/Base64URL format instantly in your browser.">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Common CSS -->
+  <link rel="stylesheet" href="common.css">
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+  .base64-textarea {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 14px !important;
+    height: 250px;
+  }
+  .drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background-color: var(--bg-surface);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background-color: var(--accent-bg-subtle);
+  }
+  .preview-img {
+    max-height: 120px;
+    max-width: 100%;
+    margin-top: 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    display: none;
+  }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header-custom">
+    <div class="header-inner">
+      <a href="index.html" class="header-brand">
+        <i class="bi bi-arrow-left"></i> Base64 Encoder & Decoder
+      </a>
+      <span class="text-muted-custom fs-7">tools.j4ck.xyz</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container-custom">
+    <div class="mb-4">
+      <h2>Base64 Encoder & Decoder</h2>
+      <p class="text-muted-custom">Encode and decode text strings or convert local files to Base64 format.</p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs border-bottom mb-4" id="tool-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-semibold" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-pane" type="button" role="tab" aria-controls="text-pane" aria-selected="true">Text Codec</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-pane" type="button" role="tab" aria-controls="file-pane" aria-selected="false">File to Base64</button>
+      </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="tool-tabs-content">
+      
+      <!-- Text Codec Pane -->
+      <div class="tab-pane fade show active" id="text-pane" role="tabpanel" aria-labelledby="text-tab">
+        <div class="row g-4">
+          <!-- Input -->
+          <div class="col-md-6">
+            <div class="card-custom h-100 mb-0">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="mb-0" for="text-input">Input</label>
+                <div class="d-flex gap-2">
+                  <button id="btn-text-sample" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">Sample</button>
+                  <button id="btn-text-clear" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">Clear</button>
+                </div>
+              </div>
+              <textarea id="text-input" class="base64-textarea" placeholder="Enter text to encode or Base64 to decode..."></textarea>
+            </div>
+          </div>
+
+          <!-- Output -->
+          <div class="col-md-6">
+            <div class="card-custom h-100 mb-0">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="mb-0" for="text-output">Output</label>
+                <button id="btn-text-copy" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">
+                  <i class="bi bi-copy"></i> Copy
+                </button>
+              </div>
+              <textarea id="text-output" class="base64-textarea" readonly placeholder="Output appears here..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration -->
+        <div class="card-custom mt-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-sm-4">
+              <label for="mode-select">Operation</label>
+              <select id="mode-select" class="form-select">
+                <option value="encode">Encode Text → Base64</option>
+                <option value="decode">Decode Base64 → Text</option>
+              </select>
+            </div>
+            <div class="col-sm-8 d-flex align-items-center pt-sm-4">
+              <div class="form-check me-4">
+                <input class="form-check-input" type="checkbox" id="url-safe-check">
+                <label class="form-check-label" for="url-safe-check">
+                  URL-Safe (replace + with -, / with _)
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="padding-check" checked>
+                <label class="form-check-label" for="padding-check">
+                  Keep Padding (=)
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- File Pane -->
+      <div class="tab-pane fade" id="file-pane" role="tabpanel" aria-labelledby="file-tab">
+        <div class="card-custom">
+          <div id="drop-zone" class="drop-zone">
+            <i class="bi bi-cloud-upload fs-1 text-muted d-block mb-2"></i>
+            <span class="fw-semibold">Drag & Drop file here or click to select</span>
+            <p class="text-muted-custom fs-8 mt-1">Convert image, PDF, audio, or any other file to Base64 data URL.</p>
+            <input type="file" id="file-input" class="d-none">
+          </div>
+          <div class="text-center">
+            <img id="image-preview" class="preview-img" alt="Image preview">
+          </div>
+        </div>
+
+        <!-- File Base64 Output -->
+        <div class="card-custom d-none" id="file-output-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <label class="mb-0" for="file-output">Base64 Data URL</label>
+            <div class="d-flex gap-2">
+              <button id="btn-file-copy" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">
+                <i class="bi bi-copy"></i> Copy Data URL
+              </button>
+              <button id="btn-file-raw-copy" class="btn-custom btn-custom-secondary py-1 px-2 fs-8">
+                <i class="bi bi-copy"></i> Copy Raw Base64
+              </button>
+            </div>
+          </div>
+          <textarea id="file-output" class="base64-textarea" readonly></textarea>
+          <div class="fs-8 text-muted-custom mt-2" id="file-info-text"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module">
+  // Text Codec Elements
+  const textInput = document.getElementById('text-input');
+  const textOutput = document.getElementById('text-output');
+  const modeSelect = document.getElementById('mode-select');
+  const urlSafeCheck = document.getElementById('url-safe-check');
+  const paddingCheck = document.getElementById('padding-check');
+  const btnTextSample = document.getElementById('btn-text-sample');
+  const btnTextClear = document.getElementById('btn-text-clear');
+  const btnTextCopy = document.getElementById('btn-text-copy');
+
+  // File Elements
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const imagePreview = document.getElementById('image-preview');
+  const fileOutputCard = document.getElementById('file-output-card');
+  const fileOutput = document.getElementById('file-output');
+  const btnFileCopy = document.getElementById('btn-file-copy');
+  const btnFileRawCopy = document.getElementById('btn-file-raw-copy');
+  const fileInfoText = document.getElementById('file-info-text');
+
+  let rawBase64 = '';
+
+  // Text encoder / decoder logic
+  function processText() {
+    const inputVal = textInput.value;
+    if (!inputVal) {
+      textOutput.value = '';
+      return;
+    }
+
+    const mode = modeSelect.value;
+    const isUrlSafe = urlSafeCheck.checked;
+    const keepPadding = paddingCheck.checked;
+
+    if (mode === 'encode') {
+      try {
+        // Handle Unicode characters correctly by encoding to UTF-8 bytes first
+        const utf8Bytes = new TextEncoder().encode(inputVal);
+        let binaryStr = '';
+        for (let i = 0; i < utf8Bytes.length; i++) {
+          binaryStr += String.fromCharCode(utf8Bytes[i]);
+        }
+        let base64 = btoa(binaryStr);
+
+        if (isUrlSafe) {
+          base64 = base64.replace(/\+/g, '-').replace(/\//g, '_');
+        }
+        if (!keepPadding) {
+          base64 = base64.replace(/=+$/, '');
+        }
+        textOutput.value = base64;
+      } catch (e) {
+        textOutput.value = `Encoding Error: ${e.message}`;
+      }
+    } else {
+      try {
+        let base64 = inputVal.trim();
+        // Convert URL-safe characters back to standard Base64
+        base64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+        
+        // Restore missing padding if needed
+        if (base64.length % 4 > 0) {
+          base64 += '='.repeat(4 - (base64.length % 4));
+        }
+
+        const binaryStr = atob(base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        const decoded = new TextDecoder().decode(bytes);
+        textOutput.value = decoded;
+      } catch (e) {
+        textOutput.value = `Decoding Error: Invalid Base64 data (${e.message})`;
+      }
+    }
+  }
+
+  // File reader logic
+  function processFile(file) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      rawBase64 = dataUrl.split(',')[1];
+      
+      fileOutput.value = dataUrl;
+      fileOutputCard.classList.remove('d-none');
+      
+      const sizeKB = (file.size / 1024).toFixed(2);
+      fileInfoText.textContent = `File: ${file.name} | Type: ${file.type || 'unknown'} | Size: ${sizeKB} KB`;
+
+      if (file.type.startsWith('image/')) {
+        imagePreview.src = dataUrl;
+        imagePreview.style.display = 'inline-block';
+      } else {
+        imagePreview.style.display = 'none';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Text Event Listeners
+  textInput.addEventListener('input', processText);
+  modeSelect.addEventListener('change', processText);
+  urlSafeCheck.addEventListener('change', processText);
+  paddingCheck.addEventListener('change', processText);
+
+  btnTextSample.addEventListener('click', () => {
+    if (modeSelect.value === 'encode') {
+      textInput.value = "Hello World! 🌎 Let's encode some Unicode characters.";
+    } else {
+      textInput.value = "SGVsbG8gV29ybGQhIPCfjI0gTGV0J3MgZW5jb2RlIHNvbWUgVW5pY29kZSBjaGFyYWN0ZXJzLg==";
+    }
+    processText();
+  });
+
+  btnTextClear.addEventListener('click', () => {
+    textInput.value = '';
+    textOutput.value = '';
+    textInput.focus();
+  });
+
+  btnTextCopy.addEventListener('click', async () => {
+    const val = textOutput.value;
+    if (!val) return;
+    try {
+      await navigator.clipboard.writeText(val);
+      const originalText = btnTextCopy.innerHTML;
+      btnTextCopy.innerHTML = '<i class="bi bi-check"></i> Copied!';
+      setTimeout(() => {
+        btnTextCopy.innerHTML = originalText;
+      }, 2000);
+    } catch (err) {
+      alert('Failed to copy text: ' + err);
+    }
+  });
+
+  // File Drag & Drop Listeners
+  dropZone.addEventListener('click', () => fileInput.click());
+  
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      processFile(e.target.files[0]);
+    }
+  });
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+    }, false);
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length > 0) {
+      processFile(files[0]);
+    }
+  });
+
+  // Copy Buttons for Files
+  btnFileCopy.addEventListener('click', async () => {
+    if (!fileOutput.value) return;
+    try {
+      await navigator.clipboard.writeText(fileOutput.value);
+      const originalText = btnFileCopy.innerHTML;
+      btnFileCopy.innerHTML = '<i class="bi bi-check"></i> Copied!';
+      setTimeout(() => {
+        btnFileCopy.innerHTML = originalText;
+      }, 2000);
+    } catch (err) {
+      alert('Failed to copy.');
+    }
+  });
+
+  btnFileRawCopy.addEventListener('click', async () => {
+    if (!rawBase64) return;
+    try {
+      await navigator.clipboard.writeText(rawBase64);
+      const originalText = btnFileRawCopy.innerHTML;
+      btnFileRawCopy.innerHTML = '<i class="bi bi-check"></i> Copied!';
+      setTimeout(() => {
+        btnFileRawCopy.innerHTML = originalText;
+      }, 2000);
+    } catch (err) {
+      alert('Failed to copy.');
+    }
+  });
+
+  // Bootstrap Tab Change Handler (to fix sizing if needed)
+  const tabEl = document.querySelector('button[data-bs-toggle="tab"]');
+  tabEl.addEventListener('shown.bs.tab', () => {
+    // any tab change adjustments
+  });
+  </script>
+
+  <!-- Bootstrap JS (needed for Tabs) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
