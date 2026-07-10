@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bluesky Alt Text Generator — Jack's Tools</title>
+  <meta name="description" content="Generate a screen-reader friendly single-paragraph description from any Bluesky post link.">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Common CSS -->
+  <link rel="stylesheet" href="common.css">
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+  /* Tool-specific styles */
+  .post-preview-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .avatar-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+  }
+  .preview-image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .grid-image-item {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+  }
+  .alt-text-output {
+    font-size: 16px !important; /* Standardized 16px font size */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    height: 180px;
+    resize: none;
+    line-height: 1.6;
+  }
+  .badge-alt {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background-color: var(--accent-bg-subtle);
+    color: var(--accent);
+    border: 1px solid var(--border-color);
+  }
+  .quote-post-card {
+    border-left: 3px solid var(--accent);
+    background-color: var(--bg-page);
+    padding: 0.75rem;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin-top: 0.75rem;
+  }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header-custom">
+    <div class="header-inner">
+      <a href="index.html" class="header-brand">
+        <i class="bi bi-arrow-left"></i> Bluesky Alt Text Generator
+      </a>
+      <span class="text-muted-custom fs-7">tools.j4ck.xyz</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container-custom">
+    <div class="mb-4">
+      <h2>Bluesky Alt Text Generator</h2>
+      <p class="text-muted-custom">Paste a Bluesky post link to combine author info, post text, and media descriptions into a single, screen-reader friendly paragraph.</p>
+    </div>
+
+    <!-- Input Section -->
+    <div class="card-custom">
+      <label for="post-url-input">Bluesky Post URL</label>
+      <div class="input-group">
+        <input type="url" id="post-url-input" class="form-control" placeholder="https://bsky.app/profile/username.bsky.social/post/3lc3..." aria-label="Bluesky post URL">
+        <button id="btn-fetch" class="btn-custom btn-custom-primary">
+          <i class="bi bi-cloud-download"></i> Fetch & Generate
+        </button>
+      </div>
+      <div id="url-error" class="text-danger fs-8 mt-2 d-none"></div>
+    </div>
+
+    <!-- Status Loading State -->
+    <div id="loading-spinner" class="text-center py-5 d-none">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted-custom mt-2 mb-0">Fetching post data from Bluesky API...</p>
+    </div>
+
+    <!-- Main Output / Preview -->
+    <div id="result-section" class="row g-4 d-none">
+      
+      <!-- Post Preview Pane -->
+      <div class="col-md-6">
+        <div class="card-custom h-100 mb-0">
+          <h5 class="mb-3"><i class="bi bi-eye"></i> Post Preview</h5>
+          
+          <div id="post-preview-content" class="post-preview-card">
+            <!-- Dynamic Post Details -->
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <img id="author-avatar" src="" class="avatar-img" alt="Avatar">
+              <div>
+                <div id="author-name" class="fw-bold text-primary"></div>
+                <div id="author-handle" class="text-muted-custom fs-7"></div>
+              </div>
+            </div>
+            
+            <p id="post-text-content" class="mb-3 whitespace-pre-wrap"></p>
+            
+            <!-- Embedded Media Preview -->
+            <div id="media-preview-container" class="d-none">
+              <label class="mb-2">Attached Media</label>
+              <div id="media-grid" class="preview-image-grid"></div>
+            </div>
+
+            <!-- Quote Post Preview -->
+            <div id="quote-preview-container" class="quote-post-card d-none">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <img id="quote-author-avatar" src="" class="avatar-img" style="width: 24px; height: 24px;" alt="Quote Avatar">
+                <span id="quote-author-name" class="fw-semibold text-primary fs-7"></span>
+                <span id="quote-author-handle" class="text-muted-custom fs-8"></span>
+              </div>
+              <p id="quote-text-content" class="mb-0 fs-7 whitespace-pre-wrap"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alt Text Formulator Pane -->
+      <div class="col-md-6">
+        <div class="card-custom h-100 mb-0 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0"><i class="bi bi-file-text"></i> Screen Reader Alt Text</h5>
+              <span class="badge-alt">Single Paragraph</span>
+            </div>
+            <textarea id="alt-text-output" class="form-control alt-text-output mb-3" placeholder="Generated alt text description will appear here..."></textarea>
+            <p class="text-muted-custom fs-8">This description merges the post details, author's handle, post contents, and any existing media alt texts. Feel free to tweak it above.</p>
+          </div>
+          
+          <button id="btn-copy" class="btn-custom btn-custom-primary w-100 py-3 mt-3">
+            <i class="bi bi-copy"></i> Copy Description
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module">
+  const postUrlInput = document.getElementById('post-url-input');
+  const btnFetch = document.getElementById('btn-fetch');
+  const urlError = document.getElementById('url-error');
+  const loadingSpinner = document.getElementById('loading-spinner');
+  const resultSection = document.getElementById('result-section');
+
+  // Preview elements
+  const authorAvatar = document.getElementById('author-avatar');
+  const authorName = document.getElementById('author-name');
+  const authorHandle = document.getElementById('author-handle');
+  const postTextContent = document.getElementById('post-text-content');
+  const mediaPreviewContainer = document.getElementById('media-preview-container');
+  const mediaGrid = document.getElementById('media-grid');
+  
+  // Quote elements
+  const quotePreviewContainer = document.getElementById('quote-preview-container');
+  const quoteAuthorAvatar = document.getElementById('quote-author-avatar');
+  const quoteAuthorName = document.getElementById('quote-author-name');
+  const quoteAuthorHandle = document.getElementById('quote-author-handle');
+  const quoteTextContent = document.getElementById('quote-text-content');
+
+  // Output elements
+  const altTextOutput = document.getElementById('alt-text-output');
+  const btnCopy = document.getElementById('btn-copy');
+
+  // Regex to extract handle/DID and RKEY from Bluesky URLs
+  function parseBlueskyUrl(urlStr) {
+    try {
+      const cleanUrl = urlStr.split('?')[0].split('#')[0].trim();
+      const match = cleanUrl.match(/bsky\.app\/profile\/([^\/]+)\/post\/([^\/]+)/);
+      if (!match) {
+        return null;
+      }
+      return {
+        handleOrDid: match[1],
+        rkey: match[2]
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function resolveHandle(handle) {
+    const url = `https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to resolve handle "${handle}". Make sure it is correct.`);
+    }
+    const data = await response.json();
+    return data.did;
+  }
+
+  async function fetchPostThread(atUri) {
+    const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${encodeURIComponent(atUri)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Failed to fetch post. It might be private or deleted.");
+    }
+    const data = await response.json();
+    return data.thread;
+  }
+
+  function cleanString(str) {
+    if (!str) return '';
+    // Replace newlines with spaces to enforce a single paragraph
+    return str.replace(/[\r\n]+/g, ' ').trim();
+  }
+
+  function generateAltTextParagraph(post) {
+    const author = post.author;
+    const authorDisplayName = author.displayName || author.handle;
+    const handle = author.handle;
+    const record = post.record || post.value;
+    const postText = cleanString(record ? record.text : '');
+    
+    let text = `Bluesky post by ${authorDisplayName} (@${handle})`;
+    if (postText) {
+      text += ` reads: "${postText}"`;
+    } else {
+      text += ` with no text`;
+    }
+
+    const embed = post.embed;
+    if (embed) {
+      const mediaAlts = [];
+      let mediaCount = 0;
+
+      // Extract image media
+      if (embed.$type === 'app.bsky.embed.images#view' && embed.images) {
+        mediaCount = embed.images.length;
+        embed.images.forEach((img, idx) => {
+          if (img.alt) {
+            mediaAlts.push(`Image ${idx + 1} alt text: "${cleanString(img.alt)}"`);
+          } else {
+            mediaAlts.push(`Image ${idx + 1} has no alt text`);
+          }
+        });
+      }
+
+      // Extract video media
+      if (embed.$type === 'app.bsky.embed.video#view') {
+        mediaCount = 1;
+        if (embed.alt) {
+          mediaAlts.push(`Video description: "${cleanString(embed.alt)}"`);
+        } else {
+          mediaAlts.push(`Video has no alt text`);
+        }
+      }
+
+      // Extract media nested inside recordWithMedia
+      if (embed.$type === 'app.bsky.embed.recordWithMedia#view' && embed.media) {
+        const media = embed.media;
+        if (media.$type === 'app.bsky.embed.images#view' && media.images) {
+          mediaCount = media.images.length;
+          media.images.forEach((img, idx) => {
+            if (img.alt) {
+              mediaAlts.push(`Image ${idx + 1} alt text: "${cleanString(img.alt)}"`);
+            } else {
+              mediaAlts.push(`Image ${idx + 1} has no alt text`);
+            }
+          });
+        } else if (media.$type === 'app.bsky.embed.video#view') {
+          mediaCount = 1;
+          if (media.alt) {
+            mediaAlts.push(`Video description: "${cleanString(media.alt)}"`);
+          } else {
+            mediaAlts.push(`Video has no alt text`);
+          }
+        }
+      }
+
+      if (mediaCount > 0) {
+        text += `. Attached media (${mediaCount} item${mediaCount > 1 ? 's' : ''}): ${mediaAlts.join(', ')}`;
+      }
+
+      // Extract quote posts
+      let quotedRecord = null;
+      if (embed.$type === 'app.bsky.embed.record#view' || embed.$type === 'app.bsky.embed.recordWithMedia#view') {
+        quotedRecord = embed.record;
+      }
+      // Unpack nested record
+      if (quotedRecord && quotedRecord.record) {
+        quotedRecord = quotedRecord.record;
+      }
+
+      if (quotedRecord && quotedRecord.$type === 'app.bsky.embed.record#viewRecord') {
+        const qAuthor = quotedRecord.author;
+        const qDisplayName = qAuthor.displayName || qAuthor.handle;
+        const qHandle = qAuthor.handle;
+        const qText = cleanString(quotedRecord.value ? quotedRecord.value.text : '');
+
+        text += `. Quoting a post by ${qDisplayName} (@${qHandle})`;
+        if (qText) {
+          text += ` that reads: "${qText}"`;
+        } else {
+          text += ` with no text`;
+        }
+
+        // Quote post media alts
+        if (quotedRecord.embeds) {
+          const qMediaAlts = [];
+          quotedRecord.embeds.forEach(qEmbed => {
+            if (qEmbed.$type === 'app.bsky.embed.images#view' && qEmbed.images) {
+              qEmbed.images.forEach((img, idx) => {
+                if (img.alt) {
+                  qMediaAlts.push(`Quoted image ${idx + 1} alt text: "${cleanString(img.alt)}"`);
+                }
+              });
+            } else if (qEmbed.$type === 'app.bsky.embed.video#view' && qEmbed.alt) {
+              qMediaAlts.push(`Quoted video description: "${cleanString(qEmbed.alt)}"`);
+            }
+          });
+          if (qMediaAlts.length > 0) {
+            text += `. Quoted media: ${qMediaAlts.join(', ')}`;
+          }
+        }
+      }
+    }
+
+    text = text.trim();
+    if (!text.endsWith('.')) {
+      text += '.';
+    }
+    return text;
+  }
+
+  function displayPostPreview(post) {
+    const author = post.author;
+    authorAvatar.src = author.avatar || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
+    authorName.textContent = author.displayName || author.handle;
+    authorHandle.textContent = `@${author.handle}`;
+    
+    const record = post.record || post.value;
+    postTextContent.textContent = record ? record.text : '';
+
+    // Handle media grid rendering
+    mediaGrid.innerHTML = '';
+    mediaPreviewContainer.classList.add('d-none');
+    
+    const embed = post.embed;
+    let images = [];
+    if (embed) {
+      if (embed.$type === 'app.bsky.embed.images#view') {
+        images = embed.images || [];
+      } else if (embed.$type === 'app.bsky.embed.recordWithMedia#view' && embed.media) {
+        if (embed.media.$type === 'app.bsky.embed.images#view') {
+          images = embed.media.images || [];
+        }
+      }
+    }
+
+    if (images.length > 0) {
+      images.forEach(img => {
+        const el = document.createElement('img');
+        el.src = img.thumb;
+        el.className = 'grid-image-item';
+        el.alt = img.alt || 'Attached image';
+        if (img.alt) {
+          el.title = `Alt text: ${img.alt}`;
+        }
+        mediaGrid.appendChild(el);
+      });
+      mediaPreviewContainer.classList.remove('d-none');
+    }
+
+    // Handle quote post rendering
+    quotePreviewContainer.classList.add('d-none');
+    let quotedRecord = null;
+    if (embed) {
+      if (embed.$type === 'app.bsky.embed.record#view' || embed.$type === 'app.bsky.embed.recordWithMedia#view') {
+        quotedRecord = embed.record;
+      }
+      if (quotedRecord && quotedRecord.record) {
+        quotedRecord = quotedRecord.record;
+      }
+    }
+
+    if (quotedRecord && quotedRecord.$type === 'app.bsky.embed.record#viewRecord') {
+      const qAuthor = quotedRecord.author;
+      quoteAuthorAvatar.src = qAuthor.avatar || 'https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png';
+      quoteAuthorName.textContent = qAuthor.displayName || qAuthor.handle;
+      quoteAuthorHandle.textContent = `@${qAuthor.handle}`;
+      quoteTextContent.textContent = quotedRecord.value ? quotedRecord.value.text : '';
+      quotePreviewContainer.classList.remove('d-none');
+    }
+  }
+
+  async function handleFetch() {
+    urlError.classList.add('d-none');
+    resultSection.classList.add('d-none');
+    
+    const urlVal = postUrlInput.value.trim();
+    if (!urlVal) {
+      showError("Please enter a Bluesky post URL.");
+      return;
+    }
+
+    const parsed = parseBlueskyUrl(urlVal);
+    if (!parsed) {
+      showError("Could not parse Bluesky post URL. Format must match: https://bsky.app/profile/[username]/post/[post-id]");
+      return;
+    }
+
+    loadingSpinner.classList.remove('d-none');
+
+    try {
+      let did = parsed.handleOrDid;
+      if (!did.startsWith('did:')) {
+        did = await resolveHandle(did);
+      }
+
+      const atUri = `at://${did}/app.bsky.feed.post/${parsed.rkey}`;
+      const thread = await fetchPostThread(atUri);
+      
+      if (!thread || !thread.post) {
+        throw new Error("Unable to retrieve post data.");
+      }
+
+      displayPostPreview(thread.post);
+      
+      const altText = generateAltTextParagraph(thread.post);
+      altTextOutput.value = altText;
+      
+      loadingSpinner.classList.add('d-none');
+      resultSection.classList.remove('d-none');
+    } catch (e) {
+      loadingSpinner.classList.add('d-none');
+      showError(e.message);
+    }
+  }
+
+  function showError(msg) {
+    urlError.textContent = msg;
+    urlError.classList.remove('d-none');
+  }
+
+  // Event Listeners
+  btnFetch.addEventListener('click', handleFetch);
+  
+  postUrlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      handleFetch();
+    }
+  });
+
+  btnCopy.addEventListener('click', async () => {
+    const val = altTextOutput.value;
+    if (!val) return;
+    try {
+      await navigator.clipboard.writeText(val);
+      const originalText = btnCopy.innerHTML;
+      btnCopy.innerHTML = '<i class="bi bi-check"></i> Description Copied!';
+      setTimeout(() => {
+        btnCopy.innerHTML = originalText;
+      }, 2000);
+    } catch (err) {
+      alert('Failed to copy text: ' + err);
+    }
+  });
+  </script>
+</body>
+</html>
