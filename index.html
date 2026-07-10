@@ -269,13 +269,18 @@
 
   // Global Visits state
   let globalVisits = {};
+  let isGlobalActive = false;
 
   async function fetchGlobalVisits() {
     try {
       const res = await fetch('/api/visits');
       if (res.ok) {
-        globalVisits = await res.json();
-        filterAndSortTools();
+        const data = await res.json();
+        if (data && data.active) {
+          globalVisits = data.visits || {};
+          isGlobalActive = true;
+          filterAndSortTools();
+        }
       }
     } catch (e) {
       console.warn("Global analytics unavailable, using local storage fallback.", e);
@@ -284,8 +289,8 @@
 
   // Visit counting & Last used system
   function getVisitCount(path) {
-    if (globalVisits && globalVisits[path] !== undefined) {
-      return globalVisits[path];
+    if (isGlobalActive) {
+      return globalVisits[path] || 0;
     }
     return parseInt(localStorage.getItem(`visits_${path}`) || '0', 10);
   }
