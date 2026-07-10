@@ -74,7 +74,7 @@
     color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
   }
   </style>
 </head>
@@ -117,6 +117,7 @@
         <label for="sort-select" class="mb-0 text-muted-custom fs-7" style="white-space: nowrap;">Sort by:</label>
         <select id="sort-select" class="form-select form-select-sm py-1" style="width: auto; font-size: 0.85rem; border-color: var(--border-color); background-color: var(--bg-surface); color: var(--text-primary);">
           <option value="newest">Newest Added</option>
+          <option value="recently_used">Recently Opened</option>
           <option value="popular">Most Visited</option>
           <option value="alphabetical">Alphabetical (A-Z)</option>
         </select>
@@ -245,14 +246,40 @@
     return new Date(dateStr).toLocaleDateString('en-US', options);
   }
 
-  // Visit counting system
+  // Relative Time Helper for Recently Used
+  function formatRelativeTime(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHr / 24);
+
+    if (diffSec < 60) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    const options = { month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  }
+
+  // Visit counting & Last used system
   function getVisitCount(path) {
     return parseInt(localStorage.getItem(`visits_${path}`) || '0', 10);
+  }
+
+  function getLastUsed(path) {
+    return localStorage.getItem(`last_used_${path}`);
   }
 
   function incrementVisit(path) {
     const current = getVisitCount(path);
     localStorage.setItem(`visits_${path}`, current + 1);
+    localStorage.setItem(`last_used_${path}`, new Date().toISOString());
   }
 
   function renderTools(filteredTools) {
@@ -268,7 +295,17 @@
     
     const html = filteredTools.map(tool => {
       const visits = getVisitCount(tool.path);
+      const lastUsed = getLastUsed(tool.path);
+      
       const visitBadge = visits > 0 ? `<span class="ms-2 text-muted-custom fs-8"><i class="bi bi-eye"></i> ${visits}</span>` : '';
+      
+      // Only display the last used badge if the tool has been previously visited
+      const lastUsedBadge = lastUsed ? `
+        <span class="tool-metadata-text fs-8 ms-2 text-muted-custom" title="Last opened: ${new Date(lastUsed).toLocaleString()}">
+          • <i class="bi bi-clock-history"></i> ${formatRelativeTime(lastUsed)}
+        </span>
+      ` : '';
+
       return `
         <div class="col-md-6 col-lg-4 tool-item">
           <a href="${tool.path}" data-path="${tool.path}" class="card-custom tool-card">
@@ -280,9 +317,12 @@
               <p class="card-text text-muted-custom fs-7 mb-3">${tool.description}</p>
             </div>
             <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
-              <span class="tool-metadata-text">
-                <i class="bi bi-calendar3"></i> ${formatDate(tool.created)}
-              </span>
+              <div class="d-flex align-items-center">
+                <span class="tool-metadata-text">
+                  <i class="bi bi-calendar3"></i> ${formatDate(tool.created)}
+                </span>
+                ${lastUsedBadge}
+              </div>
               ${visitBadge}
             </div>
           </a>
@@ -306,6 +346,12 @@
     // Sort
     if (sortVal === 'newest') {
       filtered.sort((a, b) => new Date(b.created) - new Date(a.created));
+    } else if (sortVal === 'recently_used') {
+      filtered.sort((a, b) => {
+        const timeA = getLastUsed(a.path) ? new Date(getLastUsed(a.path)) : 0;
+        const timeB = getLastUsed(b.path) ? new Date(getLastUsed(b.path)) : 0;
+        return timeB - timeA; // Descending
+      });
     } else if (sortVal === 'popular') {
       filtered.sort((a, b) => getVisitCount(b.path) - getVisitCount(a.path));
     } else if (sortVal === 'alphabetical') {
