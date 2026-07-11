@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube to MP3 / MP4 Downloader — Browser Tools</title>
+  <meta name="description" content="Download YouTube videos as MP4 or extract audio as MP3, with selectable video resolution and audio bitrate.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="YouTube to MP3 / MP4 Downloader — Browser Tools">
+  <meta property="og:description" content="Download YouTube videos as MP4 or extract audio as MP3, with selectable video resolution and audio bitrate.">
+  <meta property="og:image" content="https://tools.j4ck.xyz/og-image.jpg">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://tools.j4ck.xyz/og-image.jpg">
+
+  <!-- Prevent Theme Flash -->
+  <script>
+    const savedTheme = localStorage.getItem('theme') || 'auto';
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('theme-dark');
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.add('theme-light');
+    }
+  </script>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Common CSS -->
+  <link rel="stylesheet" href="common.css">
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+  /* Typography overrides */
+  input, select, button, textarea {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    font-size: 16px !important;
+  }
+  /* Tool-specific styles */
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .mode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border-color);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-weight: 600;
+  }
+  .mode-btn:hover {
+    border-color: var(--accent);
+  }
+  .mode-btn.active {
+    border-color: var(--accent);
+    background-color: var(--accent-bg-subtle);
+    color: var(--accent);
+  }
+  .mode-btn i {
+    font-size: 1.25rem;
+  }
+  .preview-thumb {
+    width: 100%;
+    max-width: 320px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    display: block;
+  }
+  .result-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .info-note {
+    background-color: var(--accent-bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, var(--text-primary));
+  }
+  .advanced-summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--accent);
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .advanced-summary::-webkit-details-marker {
+    display: none;
+  }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header-custom">
+    <div class="header-inner">
+      <a href="index.html" class="header-brand">
+        <i class="bi bi-arrow-left"></i> YouTube Downloader
+      </a>
+      <div class="d-flex gap-2 align-items-center">
+        <button id="theme-toggle" class="btn-custom btn-custom-secondary py-1 px-2 fs-7" title="Switch Theme">
+          <i id="theme-toggle-icon" class="bi bi-circle-half"></i>
+        </button>
+        <span class="text-muted-custom fs-7">tools.j4ck.xyz</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container-custom">
+    <div class="mb-4">
+      <h2>YouTube to MP3 / MP4 Downloader</h2>
+      <p class="text-muted-custom">Paste a YouTube link, pick a format and quality, and download the video as MP4 or extract the audio as MP3.</p>
+    </div>
+
+    <!-- Input Section -->
+    <div class="card-custom">
+      <!-- Mode Toggle -->
+      <div class="mode-toggle">
+        <div id="mode-video" class="mode-btn active" role="button" tabindex="0" aria-pressed="true">
+          <i class="bi bi-film"></i> Video (MP4)
+        </div>
+        <div id="mode-audio" class="mode-btn" role="button" tabindex="0" aria-pressed="false">
+          <i class="bi bi-music-note-beamed"></i> Audio (MP3)
+        </div>
+      </div>
+
+      <label for="video-url-input">YouTube URL</label>
+      <div class="input-group mb-3">
+        <input type="url" id="video-url-input" class="form-control" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ" aria-label="YouTube video URL">
+      </div>
+
+      <!-- Quality Selectors -->
+      <div class="row g-3">
+        <div class="col-sm-6" id="video-quality-wrap">
+          <label for="video-quality">Video quality</label>
+          <select id="video-quality" class="form-select">
+            <option value="max">Best available (up to 8K)</option>
+            <option value="2160">2160p (4K)</option>
+            <option value="1440">1440p (2K)</option>
+            <option value="1080" selected>1080p (Full HD)</option>
+            <option value="720">720p (HD)</option>
+            <option value="480">480p</option>
+            <option value="360">360p</option>
+            <option value="240">240p</option>
+            <option value="144">144p</option>
+          </select>
+        </div>
+        <div class="col-sm-6 d-none" id="audio-quality-wrap">
+          <label for="audio-bitrate">Audio quality (bitrate)</label>
+          <select id="audio-bitrate" class="form-select">
+            <option value="320" selected>320 kbps (Best)</option>
+            <option value="256">256 kbps</option>
+            <option value="128">128 kbps</option>
+            <option value="96">96 kbps</option>
+            <option value="64">64 kbps</option>
+            <option value="8">8 kbps (Smallest)</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-download" class="btn-custom btn-custom-primary w-100 py-3 mt-4">
+        <i class="bi bi-cloud-arrow-down"></i> <span id="btn-download-label">Get MP4</span>
+      </button>
+      <div id="url-error" class="text-danger fs-8 mt-2 d-none"></div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-spinner" class="text-center py-5 d-none">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="text-muted-custom mt-2 mb-0">Processing your request… this can take a moment for large or high-quality files.</p>
+    </div>
+
+    <!-- Result -->
+    <div id="result-section" class="result-card mt-4 d-none">
+      <div class="d-flex flex-column flex-sm-row gap-3 align-items-sm-center">
+        <img id="result-thumb" class="preview-thumb" style="max-width: 200px;" alt="Video thumbnail" src="">
+        <div class="flex-grow-1">
+          <h5 id="result-title" class="mb-1">Your file is ready</h5>
+          <p id="result-meta" class="text-muted-custom fs-7 mb-3"></p>
+          <a id="btn-save" class="btn-custom btn-custom-primary" href="#" download>
+            <i class="bi bi-download"></i> <span id="btn-save-label">Download file</span>
+          </a>
+          <p class="text-muted-custom fs-8 mb-0 mt-2">If the download doesn't start automatically, use the button above.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced backend settings -->
+    <details class="mt-4">
+      <summary class="advanced-summary"><i class="bi bi-sliders"></i> Advanced: downloader backend</summary>
+      <div class="mt-3">
+        <div class="info-note mb-3">
+          <i class="bi bi-info-circle"></i>
+          <strong>How this works.</strong> yt-dlp can't run inside a browser, so this tool sends your link to an open-source
+          <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener">cobalt</a> processing instance, which returns the
+          finished MP3/MP4. Most public instances now require authentication and go up and down often — for reliable use, either
+          add an instance + API key below, or <strong>self-host cobalt</strong> in one command
+          (<code>docker run ghcr.io/imputnet/cobalt</code>) and point this tool at it. Browse public instances at
+          <a href="https://instances.cobalt.best" target="_blank" rel="noopener">instances.cobalt.best</a>.
+          Your settings are saved locally in this browser only.
+        </div>
+        <label for="instance-input">Cobalt instance URL</label>
+        <input type="url" id="instance-input" class="form-control mb-3" placeholder="https://cobalt-api.example.com">
+        <label for="apikey-input">API key <span class="text-muted-custom fs-8">(optional — only if the instance requires one)</span></label>
+        <input type="text" id="apikey-input" class="form-control mb-3" placeholder="Leave blank for public instances" autocomplete="off">
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="direct-connect">
+          <label class="form-check-label" for="direct-connect">
+            Connect directly from this browser
+            <span class="text-muted-custom fs-8 d-block">Required for private / Tailscale instances (e.g. <code>https://your-pi.your-tailnet.ts.net:8443</code>). Your browser must be on the same tailnet. Bypasses the Cloudflare proxy.</span>
+          </label>
+        </div>
+        <button id="btn-save-backend" class="btn-custom btn-custom-secondary">
+          <i class="bi bi-save"></i> Save backend settings
+        </button>
+        <span id="backend-saved" class="text-success fs-8 ms-2 d-none">Saved!</span>
+      </div>
+    </details>
+  </main>
+
+  <script type="module">
+// code in here should not be indented at the first level
+const DEFAULT_INSTANCE = 'https://cobalt-backend.canine.tools';
+
+const modeVideoBtn = document.getElementById('mode-video');
+const modeAudioBtn = document.getElementById('mode-audio');
+const videoUrlInput = document.getElementById('video-url-input');
+const videoQualityWrap = document.getElementById('video-quality-wrap');
+const audioQualityWrap = document.getElementById('audio-quality-wrap');
+const videoQuality = document.getElementById('video-quality');
+const audioBitrate = document.getElementById('audio-bitrate');
+const btnDownload = document.getElementById('btn-download');
+const btnDownloadLabel = document.getElementById('btn-download-label');
+const urlError = document.getElementById('url-error');
+const loadingSpinner = document.getElementById('loading-spinner');
+const resultSection = document.getElementById('result-section');
+const resultThumb = document.getElementById('result-thumb');
+const resultTitle = document.getElementById('result-title');
+const resultMeta = document.getElementById('result-meta');
+const btnSave = document.getElementById('btn-save');
+const btnSaveLabel = document.getElementById('btn-save-label');
+
+const instanceInput = document.getElementById('instance-input');
+const apikeyInput = document.getElementById('apikey-input');
+const directConnect = document.getElementById('direct-connect');
+const btnSaveBackend = document.getElementById('btn-save-backend');
+const backendSaved = document.getElementById('backend-saved');
+
+let mode = 'video';
+
+// --- Mode switching ---
+function setMode(next) {
+  mode = next;
+  const isVideo = mode === 'video';
+  modeVideoBtn.classList.toggle('active', isVideo);
+  modeAudioBtn.classList.toggle('active', !isVideo);
+  modeVideoBtn.setAttribute('aria-pressed', String(isVideo));
+  modeAudioBtn.setAttribute('aria-pressed', String(!isVideo));
+  videoQualityWrap.classList.toggle('d-none', !isVideo);
+  audioQualityWrap.classList.toggle('d-none', isVideo);
+  btnDownloadLabel.textContent = isVideo ? 'Get MP4' : 'Get MP3';
+}
+
+modeVideoBtn.addEventListener('click', () => setMode('video'));
+modeAudioBtn.addEventListener('click', () => setMode('audio'));
+[modeVideoBtn, modeAudioBtn].forEach(el => {
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      el.click();
+    }
+  });
+});
+
+// --- Helpers ---
+function showError(msg) {
+  urlError.textContent = msg;
+  urlError.classList.remove('d-none');
+}
+
+function parseYouTubeId(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    const host = u.hostname.replace(/^www\./, '');
+    if (host === 'youtu.be') return u.pathname.slice(1).split('/')[0] || null;
+    if (host.endsWith('youtube.com')) {
+      if (u.searchParams.get('v')) return u.searchParams.get('v');
+      const m = u.pathname.match(/\/(shorts|embed|live|v)\/([^/?#]+)/);
+      if (m) return m[2];
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function getBackend() {
+  return {
+    instance: localStorage.getItem('yt_cobalt_instance') || DEFAULT_INSTANCE,
+    apiKey: localStorage.getItem('yt_cobalt_apikey') || '',
+    direct: localStorage.getItem('yt_cobalt_direct') === '1',
+  };
+}
+
+// Build a cobalt v10 request body from the current UI selections.
+function buildCobaltBody(urlVal) {
+  const body = { url: urlVal, filenameStyle: 'pretty' };
+  if (mode === 'audio') {
+    body.downloadMode = 'audio';
+    body.audioFormat = 'mp3';
+    body.audioBitrate = audioBitrate.value;
+  } else {
+    body.downloadMode = 'auto';
+    body.videoQuality = videoQuality.value;
+    body.youtubeVideoCodec = 'h264';
+  }
+  return body;
+}
+
+const COBALT_ERRORS = {
+  'error.api.service.unsupported': 'This link or service is not supported by the downloader.',
+  'error.api.link.invalid': 'The downloader could not read that link.',
+  'error.api.link.unsupported': 'This link is not supported.',
+  'error.api.content.video.unavailable': 'This video is unavailable (it may be private, region-locked, or age-restricted).',
+  'error.api.content.video.age': 'This video is age-restricted and cannot be downloaded on this instance.',
+  'error.api.content.video.private': 'This video is private.',
+  'error.api.content.video.region': 'This video is not available in the instance\'s region.',
+  'error.api.youtube.login': 'YouTube is requiring sign-in for this video on the current instance. Try another instance in Advanced settings.',
+  'error.api.youtube.decipher': 'The downloader instance could not process this YouTube video right now. Try another instance.',
+  'error.api.fetch.fail': 'The downloader could not fetch this video. Try again or use another instance.',
+  'error.api.rate_exceeded': 'Rate limit reached on this instance. Wait a moment or switch instances in Advanced settings.',
+  'error.api.auth.jwt.missing': 'This instance requires authentication (Turnstile/JWT). Use an instance where you have an API key, or self-host cobalt — see Advanced settings below.',
+  'error.api.auth.jwt.invalid': 'The instance rejected the credentials. Check the API key in Advanced settings.',
+  'error.api.auth.key.missing': 'This instance requires an API key. Add one in Advanced settings, or self-host cobalt.',
+  'error.api.auth.key.invalid': 'The API key was rejected by this instance. Check it in Advanced settings.',
+  'error.api.auth.turnstile.missing': 'This instance requires a Turnstile challenge that this tool can\'t solve. Use an instance with an API key, or self-host cobalt.',
+};
+
+function friendlyError(data) {
+  const code = data && data.error && data.error.code;
+  if (code && COBALT_ERRORS[code]) return COBALT_ERRORS[code];
+  if (code) return `Downloader error: ${code}`;
+  if (data && data.error && data.error.text) return data.error.text;
+  return 'The downloader could not process this request.';
+}
+
+// --- Main download flow ---
+async function handleDownload() {
+  urlError.classList.add('d-none');
+  resultSection.classList.add('d-none');
+
+  const urlVal = videoUrlInput.value.trim();
+  if (!urlVal) {
+    showError('Please paste a YouTube URL.');
+    return;
+  }
+  const videoId = parseYouTubeId(urlVal);
+  if (!videoId) {
+    showError('That doesn\'t look like a valid YouTube link. Paste a full watch, youtu.be, or Shorts URL.');
+    return;
+  }
+
+  const backend = getBackend();
+
+  loadingSpinner.classList.remove('d-none');
+  btnDownload.disabled = true;
+
+  try {
+    let res;
+    if (backend.direct && backend.instance) {
+      // Browser talks straight to the (private/tailnet) cobalt instance.
+      const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+      if (backend.apiKey) headers['Authorization'] = `Api-Key ${backend.apiKey}`;
+      try {
+        res = await fetch(backend.instance, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(buildCobaltBody(urlVal)),
+        });
+      } catch (netErr) {
+        throw new Error('Could not reach your instance directly. Check that this device is on the same Tailscale network and the instance URL is correct (including https:// and port).');
+      }
+    } else {
+      // Route through the Cloudflare Pages Function proxy (public instances).
+      const payload = {
+        url: urlVal,
+        instance: backend.instance,
+        apiKey: backend.apiKey || undefined,
+        downloadMode: mode === 'audio' ? 'audio' : 'video',
+      };
+      if (mode === 'audio') {
+        payload.audioFormat = 'mp3';
+        payload.audioBitrate = audioBitrate.value;
+      } else {
+        payload.videoQuality = videoQuality.value;
+      }
+      res = await fetch('/api/youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    }
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok && data.error && typeof data.error === 'string') {
+      throw new Error(data.error);
+    }
+    if (data.status === 'error') {
+      throw new Error(friendlyError(data));
+    }
+
+    let fileUrl = null;
+    let filename = mode === 'audio' ? `${videoId}.mp3` : `${videoId}.mp4`;
+
+    if (data.status === 'tunnel' || data.status === 'redirect' || data.status === 'stream') {
+      fileUrl = data.url;
+      if (data.filename) filename = data.filename;
+    } else if (data.status === 'picker' && Array.isArray(data.picker) && data.picker.length) {
+      // Rare for single YouTube videos, but handle gracefully: take the first item.
+      fileUrl = data.picker[0].url;
+    } else if (data.url) {
+      fileUrl = data.url;
+      if (data.filename) filename = data.filename;
+    }
+
+    if (!fileUrl) {
+      throw new Error('The downloader did not return a file. Try a different quality or instance.');
+    }
+
+    showResult(fileUrl, filename, videoId);
+  } catch (err) {
+    showError(err.message || 'Something went wrong.');
+  } finally {
+    loadingSpinner.classList.add('d-none');
+    btnDownload.disabled = false;
+  }
+}
+
+function showResult(fileUrl, filename, videoId) {
+  resultThumb.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  resultThumb.onerror = () => { resultThumb.style.display = 'none'; };
+  resultTitle.textContent = 'Your file is ready';
+  resultMeta.textContent = filename + (mode === 'audio'
+    ? ` · MP3 · ${audioBitrate.value} kbps`
+    : ` · MP4 · ${videoQuality.options[videoQuality.selectedIndex].text}`);
+
+  btnSave.href = fileUrl;
+  btnSave.setAttribute('download', filename);
+  btnSaveLabel.textContent = mode === 'audio' ? 'Download MP3' : 'Download MP4';
+  resultSection.classList.remove('d-none');
+
+  // Trigger the download automatically. Cobalt tunnels send a
+  // Content-Disposition: attachment header, so this saves the file.
+  const a = document.createElement('a');
+  a.href = fileUrl;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+btnDownload.addEventListener('click', handleDownload);
+videoUrlInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') handleDownload();
+});
+
+// --- Backend settings persistence ---
+function loadBackendSettings() {
+  const stored = localStorage.getItem('yt_cobalt_instance');
+  instanceInput.value = stored || '';
+  instanceInput.placeholder = DEFAULT_INSTANCE;
+  apikeyInput.value = localStorage.getItem('yt_cobalt_apikey') || '';
+  directConnect.checked = localStorage.getItem('yt_cobalt_direct') === '1';
+}
+
+btnSaveBackend.addEventListener('click', () => {
+  const inst = instanceInput.value.trim();
+  const key = apikeyInput.value.trim();
+  if (inst) {
+    localStorage.setItem('yt_cobalt_instance', inst.replace(/\/+$/, ''));
+  } else {
+    localStorage.removeItem('yt_cobalt_instance');
+  }
+  if (key) {
+    localStorage.setItem('yt_cobalt_apikey', key);
+  } else {
+    localStorage.removeItem('yt_cobalt_apikey');
+  }
+  if (directConnect.checked) {
+    localStorage.setItem('yt_cobalt_direct', '1');
+  } else {
+    localStorage.removeItem('yt_cobalt_direct');
+  }
+  backendSaved.classList.remove('d-none');
+  setTimeout(() => backendSaved.classList.add('d-none'), 1500);
+});
+
+loadBackendSettings();
+setMode('video');
+
+// --- Theme Toggle ---
+const themeToggleBtn = document.getElementById('theme-toggle');
+const themeToggleIcon = document.getElementById('theme-toggle-icon');
+
+function updateThemeUI(theme) {
+  if (!themeToggleIcon) return;
+  themeToggleIcon.className = 'bi';
+  if (theme === 'dark') {
+    themeToggleIcon.classList.add('bi-moon-fill');
+    themeToggleBtn.title = 'Theme: Dark';
+  } else if (theme === 'light') {
+    themeToggleIcon.classList.add('bi-sun-fill');
+    themeToggleBtn.title = 'Theme: Light';
+  } else {
+    themeToggleIcon.classList.add('bi-circle-half');
+    themeToggleBtn.title = 'Theme: Auto (System)';
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = localStorage.getItem('theme') || 'auto';
+  let nextTheme = 'auto';
+  if (currentTheme === 'auto') nextTheme = 'light';
+  else if (currentTheme === 'light') nextTheme = 'dark';
+
+  localStorage.setItem('theme', nextTheme);
+  document.documentElement.classList.remove('theme-light', 'theme-dark');
+
+  if (nextTheme === 'dark') {
+    document.documentElement.classList.add('theme-dark');
+  } else if (nextTheme === 'light') {
+    document.documentElement.classList.add('theme-light');
+  }
+
+  updateThemeUI(nextTheme);
+}
+
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', toggleTheme);
+  updateThemeUI(localStorage.getItem('theme') || 'auto');
+}
+  </script>
+</body>
+</html>
