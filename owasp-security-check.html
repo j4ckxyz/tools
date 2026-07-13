@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OWASP Website Security Check — Browser Tools</title>
+  <meta name="description" content="Run a safe, passive website security assessment across OWASP Top 10 categories and copy a clean remediation report.">
+
+  <meta property="og:title" content="OWASP Website Security Check — Browser Tools">
+  <meta property="og:description" content="Run a safe, passive website security assessment across OWASP Top 10 categories and copy a clean remediation report.">
+  <meta property="og:image" content="https://tools.j4ck.xyz/og-image.jpg">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://tools.j4ck.xyz/og-image.jpg">
+
+  <script>
+    const savedTheme = localStorage.getItem('theme') || 'auto';
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('theme-dark');
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.add('theme-light');
+    }
+  </script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="common.css">
+  <style>
+* {
+  box-sizing: border-box;
+}
+:root,
+:root.theme-light {
+  --security-ink: oklch(0.27 0.035 245);
+  --security-accent: oklch(0.52 0.13 205);
+  --security-accent-soft: oklch(0.94 0.035 205);
+  --security-pass: oklch(0.55 0.13 150);
+  --security-pass-soft: oklch(0.95 0.035 150);
+  --security-warning: oklch(0.64 0.15 75);
+  --security-warning-soft: oklch(0.95 0.045 75);
+  --security-danger: oklch(0.54 0.19 25);
+  --security-danger-soft: oklch(0.95 0.035 25);
+  --security-review: oklch(0.55 0.09 285);
+  --security-review-soft: oklch(0.95 0.025 285);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) {
+    --security-ink: oklch(0.91 0.015 245);
+    --security-accent: oklch(0.72 0.11 205);
+    --security-accent-soft: oklch(0.23 0.035 205);
+    --security-pass: oklch(0.73 0.11 150);
+    --security-pass-soft: oklch(0.23 0.035 150);
+    --security-warning: oklch(0.79 0.12 75);
+    --security-warning-soft: oklch(0.24 0.035 75);
+    --security-danger: oklch(0.72 0.14 25);
+    --security-danger-soft: oklch(0.23 0.04 25);
+    --security-review: oklch(0.74 0.08 285);
+    --security-review-soft: oklch(0.23 0.025 285);
+  }
+}
+:root.theme-dark {
+  --security-ink: oklch(0.91 0.015 245);
+  --security-accent: oklch(0.72 0.11 205);
+  --security-accent-soft: oklch(0.23 0.035 205);
+  --security-pass: oklch(0.73 0.11 150);
+  --security-pass-soft: oklch(0.23 0.035 150);
+  --security-warning: oklch(0.79 0.12 75);
+  --security-warning-soft: oklch(0.24 0.035 75);
+  --security-danger: oklch(0.72 0.14 25);
+  --security-danger-soft: oklch(0.23 0.04 25);
+  --security-review: oklch(0.74 0.08 285);
+  --security-review-soft: oklch(0.23 0.025 285);
+}
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+button,
+input,
+select,
+textarea {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+  font-size: 16px !important;
+}
+.container-security {
+  max-width: 1060px;
+}
+.intro-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.55fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: end;
+  margin-bottom: 2.5rem;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--security-accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+.intro-title {
+  max-width: 720px;
+  font-size: clamp(2.25rem, 7vw, 4.8rem);
+  line-height: 0.96;
+  letter-spacing: -0.065em;
+  margin-bottom: 1.1rem;
+}
+.intro-copy {
+  max-width: 66ch;
+  font-size: 1.08rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.profile-note {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+.profile-note strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.45rem;
+}
+.scanner-panel {
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+.field-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+}
+.field-heading label {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  margin: 0;
+}
+.field-hint {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+#url-input {
+  min-height: 142px;
+  line-height: 1.55;
+}
+.authorization {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-page);
+}
+.authorization input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+  accent-color: var(--security-accent);
+}
+.authorization label {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 0;
+}
+.scan-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.advanced-toggle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.advanced-toggle summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.advanced-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  padding-top: 0.9rem;
+}
+.advanced-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 500;
+  margin: 0;
+}
+.advanced-options input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--security-accent);
+}
+.scan-button {
+  min-width: 180px;
+  background: var(--security-ink);
+  color: var(--bg-surface);
+  border-color: var(--security-ink);
+}
+.scan-button:hover {
+  background: var(--security-accent);
+  border-color: var(--security-accent);
+  color: var(--bg-surface);
+}
+.scan-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.scope-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin: 2.5rem 0;
+}
+.scope-item {
+  padding: 1.15rem;
+  text-align: center;
+}
+.scope-item + .scope-item {
+  border-left: 1px solid var(--border-color);
+}
+.scope-item i {
+  color: var(--security-accent);
+  margin-right: 0.35rem;
+}
+.scope-item strong {
+  font-size: 0.88rem;
+}
+.scope-item span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+.status-region {
+  margin-top: 1.25rem;
+}
+.status-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  margin-bottom: 0.55rem;
+}
+.progress-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--border-color);
+}
+.progress-fill {
+  width: 0;
+  height: 100%;
+  background: var(--security-accent);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.error-message {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  margin-top: 1rem;
+  border: 1px solid color-mix(in oklch, var(--security-danger) 35%, var(--border-color));
+  border-radius: 8px;
+  color: var(--security-danger);
+  background: var(--security-danger-soft);
+  font-size: 0.9rem;
+}
+.report-shell {
+  margin-top: 3rem;
+}
+.report-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.report-heading h2 {
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  margin-bottom: 0.2rem;
+}
+.report-heading p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  margin: 0;
+}
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0 0 2.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.summary-cell {
+  padding: 1.2rem 0.8rem;
+}
+.summary-cell + .summary-cell {
+  border-left: 1px solid var(--border-color);
+}
+.summary-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+.summary-label {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.target-report {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+.target-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.4rem;
+}
+.score-disc {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border: 2px solid var(--score-color, var(--security-accent));
+  border-radius: 50%;
+  color: var(--score-color, var(--security-accent));
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.target-title {
+  min-width: 0;
+}
+.target-title h3 {
+  overflow: hidden;
+  margin: 0 0 0.25rem;
+  font-size: 1.16rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.target-title p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+.grade-label {
+  color: var(--score-color, var(--security-accent));
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.finding-list {
+  display: grid;
+  gap: 0;
+}
+.finding {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color);
+}
+.severity {
+  align-self: start;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0.28rem 0.45rem;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.severity-high {
+  color: var(--security-danger);
+  background: var(--security-danger-soft);
+}
+.severity-medium {
+  color: var(--security-warning);
+  background: var(--security-warning-soft);
+}
+.severity-low,
+.severity-info {
+  color: var(--security-accent);
+  background: var(--security-accent-soft);
+}
+.severity-pass {
+  color: var(--security-pass);
+  background: var(--security-pass-soft);
+}
+.severity-review {
+  color: var(--security-review);
+  background: var(--security-review-soft);
+}
+.finding h4 {
+  font-size: 0.98rem;
+  margin: 0 0 0.3rem;
+}
+.finding-meta {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  margin-bottom: 0.4rem;
+}
+.finding p {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  margin: 0;
+}
+.finding p + p {
+  margin-top: 0.4rem;
+}
+.finding strong {
+  color: var(--text-primary);
+}
+.coverage {
+  margin-top: 1.5rem;
+}
+.coverage summary {
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 1rem;
+  margin-top: 1rem;
+}
+.coverage-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+.coverage-state {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+.coverage-tested {
+  color: var(--security-pass);
+}
+.coverage-partial {
+  color: var(--security-warning);
+}
+.coverage-manual {
+  color: var(--security-review);
+}
+.fatal-target {
+  padding: 1rem;
+  border: 1px solid color-mix(in oklch, var(--security-danger) 35%, var(--border-color));
+  border-radius: 8px;
+  background: var(--security-danger-soft);
+  color: var(--security-danger);
+}
+.method-note {
+  max-width: 78ch;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+}
+@media (max-width: 767px) {
+  .intro-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .intro-title {
+    font-size: clamp(2.35rem, 14vw, 3.6rem);
+  }
+  .scope-strip {
+    grid-template-columns: 1fr;
+  }
+  .scope-item + .scope-item {
+    border-left: 0;
+    border-top: 1px solid var(--border-color);
+  }
+  .scan-actions,
+  .report-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .scan-button,
+  #copy-report {
+    width: 100%;
+  }
+  .report-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .summary-cell:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid var(--border-color);
+  }
+  .summary-cell:nth-child(4) {
+    border-top: 1px solid var(--border-color);
+  }
+  .target-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .grade-label {
+    grid-column: 2;
+  }
+  .finding {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  .severity {
+    justify-self: start;
+  }
+  .coverage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill {
+    transition: none;
+  }
+}
+  </style>
+</head>
+<body>
+  <a class="visually-hidden-focusable" href="#scanner">Skip to scanner</a>
+
+  <header class="header-custom">
+    <div class="header-inner">
+      <a href="index.html" class="header-brand">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Security Check
+      </a>
+      <div class="d-flex gap-2 align-items-center">
+        <button id="theme-toggle" class="btn-custom btn-custom-secondary py-1 px-2 fs-7" title="Switch Theme" aria-label="Switch theme">
+          <i id="theme-toggle-icon" class="bi bi-circle-half" aria-hidden="true"></i>
+        </button>
+        <span class="text-muted-custom small">tools.j4ck.xyz</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-custom container-security">
+    <section class="intro-grid" aria-labelledby="page-title">
+      <div>
+        <div class="eyebrow"><i class="bi bi-shield-check" aria-hidden="true"></i> Authorized passive assessment</div>
+        <h1 id="page-title" class="intro-title">Inspect the surface.<br>Know the gaps.</h1>
+        <p class="intro-copy">Check one or more public URLs for transport, header, cookie, redirect, form, dependency, and content-integrity risks—mapped clearly to the OWASP Top 10.</p>
+      </div>
+      <div class="profile-note">
+        <strong>Scan profile</strong>
+        One non-destructive GET per URL, up to five redirects, no payload injection, authentication attempts, crawling, or stored data.
+      </div>
+    </section>
+
+    <section id="scanner" class="scanner-panel" aria-labelledby="scanner-title">
+      <div class="field-heading">
+        <label id="scanner-title" for="url-input">URLs to assess</label>
+        <span class="field-hint">One per line · max 10</span>
+      </div>
+      <textarea id="url-input" spellcheck="false" inputmode="url" placeholder="https://example.com&#10;https://app.example.com/login" aria-describedby="url-help"></textarea>
+      <div id="url-help" class="small text-muted-custom mt-2">Missing schemes default to HTTPS. Public HTTP and HTTPS targets on ports 80 and 443 are supported.</div>
+
+      <div class="authorization mt-4">
+        <input id="authorization-check" type="checkbox">
+        <label for="authorization-check">I own these targets or have explicit permission to assess them. I understand this is a passive configuration review, not proof that an application is secure.</label>
+      </div>
+
+      <div class="scan-actions">
+        <details class="advanced-toggle">
+          <summary>Scan options</summary>
+          <div class="advanced-options">
+            <label><input id="follow-redirects" type="checkbox" checked> Follow redirects</label>
+            <label><input id="show-passes" type="checkbox" checked> Include passed checks</label>
+          </div>
+        </details>
+        <button id="scan-button" class="btn-custom scan-button">
+          <i class="bi bi-radar" aria-hidden="true"></i>
+          <span>Run security check</span>
+        </button>
+      </div>
+
+      <div id="status-region" class="status-region d-none" aria-live="polite">
+        <div class="status-line">
+          <span id="status-text">Preparing assessment…</span>
+          <span id="status-count">0 / 0</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-label="Assessment progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+      </div>
+      <div id="form-error" class="error-message d-none" role="alert"></div>
+    </section>
+
+    <section class="scope-strip" aria-label="Assessment safeguards">
+      <div class="scope-item"><strong><i class="bi bi-eye" aria-hidden="true"></i> Passive only</strong><span>No exploit payloads or brute force</span></div>
+      <div class="scope-item"><strong><i class="bi bi-hdd-network" aria-hidden="true"></i> Public hosts only</strong><span>Private networks and custom ports blocked</span></div>
+      <div class="scope-item"><strong><i class="bi bi-clipboard-data" aria-hidden="true"></i> Evidence-led</strong><span>Each finding includes a next step</span></div>
+    </section>
+
+    <section id="report-shell" class="report-shell d-none" aria-labelledby="report-title">
+      <div class="report-heading">
+        <div>
+          <h2 id="report-title">Assessment report</h2>
+          <p id="report-subtitle">Passive OWASP coverage review</p>
+        </div>
+        <button id="copy-report" class="btn-custom btn-custom-secondary">
+          <i class="bi bi-copy" aria-hidden="true"></i>
+          <span>Copy report</span>
+        </button>
+      </div>
+      <div id="report-output" tabindex="-1"></div>
+      <p class="method-note">This report is a point-in-time, unauthenticated observation of public responses. “Passed” means the tested control was observed; it does not verify application code, authenticated paths, APIs, infrastructure, business logic, or controls that require multiple roles and requests. Follow with authenticated testing, code review, dependency scanning, and professional penetration testing where warranted.</p>
+    </section>
+  </main>
+
+  <footer class="text-center py-5 text-muted-custom small border-top mt-5">
+    <div class="container-custom container-security py-0">
+      <p class="mb-0">Use only on systems you own or are authorized to assess. Scan results are not stored by Browser Tools.</p>
+    </div>
+  </footer>
+
+  <script type="module">
+// Passive security assessment and report generation.
+const urlInput = document.getElementById('url-input');
+const authorizationCheck = document.getElementById('authorization-check');
+const followRedirects = document.getElementById('follow-redirects');
+const showPasses = document.getElementById('show-passes');
+const scanButton = document.getElementById('scan-button');
+const statusRegion = document.getElementById('status-region');
+const statusText = document.getElementById('status-text');
+const statusCount = document.getElementById('status-count');
+const progressTrack = document.querySelector('.progress-track');
+const progressFill = document.getElementById('progress-fill');
+const formError = document.getElementById('form-error');
+const reportShell = document.getElementById('report-shell');
+const reportOutput = document.getElementById('report-output');
+const reportSubtitle = document.getElementById('report-subtitle');
+const copyReportButton = document.getElementById('copy-report');
+const themeToggleButton = document.getElementById('theme-toggle');
+const themeToggleIcon = document.getElementById('theme-toggle-icon');
+
+const OWASP_COVERAGE = [
+  { id: 'A01', name: 'Broken Access Control', state: 'manual', label: 'Manual review' },
+  { id: 'A02', name: 'Cryptographic Failures', state: 'tested', label: 'Tested' },
+  { id: 'A03', name: 'Injection', state: 'manual', label: 'Manual review' },
+  { id: 'A04', name: 'Insecure Design', state: 'manual', label: 'Manual review' },
+  { id: 'A05', name: 'Security Misconfiguration', state: 'tested', label: 'Tested' },
+  { id: 'A06', name: 'Vulnerable and Outdated Components', state: 'partial', label: 'Partial' },
+  { id: 'A07', name: 'Identification and Authentication Failures', state: 'partial', label: 'Partial' },
+  { id: 'A08', name: 'Software and Data Integrity Failures', state: 'partial', label: 'Partial' },
+  { id: 'A09', name: 'Security Logging and Monitoring Failures', state: 'manual', label: 'Manual review' },
+  { id: 'A10', name: 'Server-Side Request Forgery', state: 'manual', label: 'Manual review' }
+];
+
+const MANUAL_REVIEWS = [
+  {
+    severity: 'review',
+    category: 'A01',
+    title: 'Test authorization boundaries with multiple roles',
+    evidence: 'A single anonymous response cannot verify object, function, tenant, or role-level access controls.',
+    recommendation: 'Build an authorization matrix and test every sensitive action with unauthenticated, lower-privilege, and cross-tenant accounts.'
+  },
+  {
+    severity: 'review',
+    category: 'A03',
+    title: 'Exercise inputs with context-aware injection tests',
+    evidence: 'No SQL, command, template, LDAP, XML, or browser injection payloads were sent.',
+    recommendation: 'Use an authorized authenticated DAST run and code review to trace untrusted input into interpreters and output contexts.'
+  },
+  {
+    severity: 'review',
+    category: 'A04',
+    title: 'Review abuse cases and trust boundaries',
+    evidence: 'Business rules, workflows, rate limits, and threat-model assumptions are not visible in a public response.',
+    recommendation: 'Threat-model critical workflows and test abuse cases, concurrency, quotas, recovery paths, and high-value state transitions.'
+  },
+  {
+    severity: 'review',
+    category: 'A09',
+    title: 'Verify security logging and alert response',
+    evidence: 'External response inspection cannot confirm event coverage, log integrity, retention, alerting, or incident response.',
+    recommendation: 'Generate authorized test events and verify they are attributable, protected, alerted on, retained, and actionable.'
+  },
+  {
+    severity: 'review',
+    category: 'A10',
+    title: 'Review server-side outbound request controls',
+    evidence: 'The assessment does not submit URL payloads to application features or attempt access to internal services.',
+    recommendation: 'Inventory server-side fetchers, enforce destination allowlists, validate redirects and DNS results, and block private/reserved address ranges.'
+  }
+];
+
+let reportText = '';
+let lastResults = [];
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function updateThemeUI(theme) {
+  themeToggleIcon.className = 'bi';
+  if (theme === 'dark') {
+    themeToggleIcon.classList.add('bi-moon-fill');
+    themeToggleButton.title = 'Theme: Dark';
+  } else if (theme === 'light') {
+    themeToggleIcon.classList.add('bi-sun-fill');
+    themeToggleButton.title = 'Theme: Light';
+  } else {
+    themeToggleIcon.classList.add('bi-circle-half');
+    themeToggleButton.title = 'Theme: Auto (System)';
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = localStorage.getItem('theme') || 'auto';
+  const nextTheme = currentTheme === 'auto' ? 'light' : currentTheme === 'light' ? 'dark' : 'auto';
+  localStorage.setItem('theme', nextTheme);
+  document.documentElement.classList.remove('theme-light', 'theme-dark');
+  if (nextTheme === 'dark') document.documentElement.classList.add('theme-dark');
+  if (nextTheme === 'light') document.documentElement.classList.add('theme-light');
+  updateThemeUI(nextTheme);
+}
+
+function normalizeUrls(value) {
+  const entries = value.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+  const unique = [];
+  const seen = new Set();
+  for (const entry of entries) {
+    const normalized = /^https?:\/\//i.test(entry) ? entry : `https://${entry}`;
+    let url;
+    try {
+      url = new URL(normalized);
+    } catch (_) {
+      throw new Error(`Invalid URL: ${entry}`);
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error(`Unsupported URL: ${entry}`);
+    if (!seen.has(url.href)) {
+      seen.add(url.href);
+      unique.push(url.href);
+    }
+  }
+  if (unique.length === 0) throw new Error('Enter at least one URL to assess.');
+  if (unique.length > 10) throw new Error('Enter no more than 10 URLs per assessment.');
+  return unique;
+}
+
+function showError(message) {
+  formError.innerHTML = `<i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
+  formError.classList.remove('d-none');
+}
+
+function clearError() {
+  formError.classList.add('d-none');
+  formError.textContent = '';
+}
+
+function getHeader(result, name) {
+  return result.headers?.[name.toLowerCase()] || '';
+}
+
+function splitCookies(value) {
+  if (!value) return [];
+  return value.split(/,(?=\s*[^;,=\s]+=[^;,]*)/).map(cookie => cookie.trim()).filter(Boolean);
+}
+
+function buildFindings(result) {
+  const findings = [];
+  const add = (severity, category, title, evidence, recommendation) => {
+    findings.push({ severity, category, title, evidence, recommendation });
+  };
+  const requested = new URL(result.requestedUrl);
+  const final = new URL(result.finalUrl);
+  const headers = result.headers || {};
+  const html = result.html || {};
+  const csp = getHeader(result, 'content-security-policy');
+  const hsts = getHeader(result, 'strict-transport-security');
+  const xFrameOptions = getHeader(result, 'x-frame-options');
+  const corsOrigin = getHeader(result, 'access-control-allow-origin');
+  const corsCredentials = getHeader(result, 'access-control-allow-credentials');
+
+  if (result.status >= 500) {
+    add('high', 'A05', `Server returned HTTP ${result.status}`, `The public request ended with ${result.status} ${result.statusText || ''}.`.trim(), 'Investigate the failing path and ensure production errors return a controlled response without sensitive detail.');
+  } else if (result.status >= 400) {
+    add('medium', 'A05', `Target returned HTTP ${result.status}`, `The assessment inspected an error response rather than the expected application page.`, 'Confirm the URL is public and assess the intended application response for representative results.');
+  } else {
+    add('pass', 'A05', 'Public response was reachable', `The final response returned HTTP ${result.status}.`, 'Continue monitoring availability separately from security posture.');
+  }
+
+  if (final.protocol === 'https:') {
+    add('pass', 'A02', 'HTTPS is in use', `The final response used TLS at ${final.origin}.`, 'Keep TLS versions, certificate renewal, and cipher policy under automated monitoring.');
+  } else {
+    add('high', 'A02', 'Connection is not protected by HTTPS', `The final URL is ${result.finalUrl}.`, 'Redirect all HTTP traffic to HTTPS and update internal links, forms, APIs, and canonical URLs.');
+  }
+
+  if (requested.protocol === 'https:' && final.protocol === 'http:') {
+    add('high', 'A02', 'Redirect downgraded HTTPS to HTTP', `${result.requestedUrl} ultimately redirected to ${result.finalUrl}.`, 'Remove transport downgrades and keep every redirect hop on HTTPS.');
+  } else if (requested.protocol === 'http:' && final.protocol === 'https:') {
+    add('pass', 'A02', 'HTTP upgrades to HTTPS', `The redirect chain ends at ${result.finalUrl}.`, 'Keep the redirect direct and combine it with HSTS.');
+  }
+
+  if (final.protocol === 'https:') {
+    if (!hsts) {
+      add('medium', 'A02', 'Strict-Transport-Security is missing', 'No HSTS response header was observed.', 'Add Strict-Transport-Security with an appropriate max-age; consider includeSubDomains and preload after validating every subdomain.');
+    } else {
+      const maxAge = Number(hsts.match(/max-age\s*=\s*(\d+)/i)?.[1] || 0);
+      if (maxAge < 15552000) {
+        add('low', 'A02', 'HSTS lifetime is short', `Observed: ${hsts}`, 'Use a max-age of at least 15552000 seconds once HTTPS is stable across the scope.');
+      } else {
+        add('pass', 'A02', 'HSTS is enabled', `Observed: ${hsts}`, 'Review includeSubDomains and preload eligibility against the deployment model.');
+      }
+    }
+  }
+
+  if (!csp) {
+    add('medium', 'A05', 'Content-Security-Policy is missing', 'No enforcing CSP header was observed.', 'Deploy a nonce- or hash-based CSP, beginning in report-only mode, then remove unsafe sources before enforcement.');
+  } else {
+    add('pass', 'A05', 'Content-Security-Policy is present', `Observed an enforcing CSP with ${csp.length} characters.`, 'Continue testing the policy on every route and monitor violation reports.');
+    if (/\bunsafe-eval\b/i.test(csp)) add('medium', 'A05', 'CSP allows unsafe-eval', 'The policy contains unsafe-eval.', 'Remove eval-like execution and the unsafe-eval source expression.');
+    if (/\bunsafe-inline\b/i.test(csp) && !/\bnonce-|sha(?:256|384|512)-/i.test(csp)) add('medium', 'A05', 'CSP broadly allows inline code', 'The policy contains unsafe-inline without an observed nonce or hash.', 'Replace unsafe-inline with per-response nonces or stable hashes.');
+    if (!/\bobject-src\s+'none'/i.test(csp)) add('low', 'A05', 'CSP does not explicitly disable object sources', 'No object-src \'none\' directive was observed.', 'Add object-src \'none\' unless legacy plugin content is an explicit requirement.');
+    if (!/\bbase-uri\s+/i.test(csp)) add('low', 'A05', 'CSP does not restrict base-uri', 'No base-uri directive was observed.', 'Add base-uri \'none\' or a narrowly scoped value to prevent base-tag injection abuse.');
+  }
+
+  if (!xFrameOptions && !/\bframe-ancestors\s+/i.test(csp)) {
+    add('medium', 'A05', 'Framing protection is missing', 'Neither X-Frame-Options nor CSP frame-ancestors was observed.', 'Set CSP frame-ancestors to trusted origins; add X-Frame-Options for legacy client coverage where appropriate.');
+  } else {
+    add('pass', 'A05', 'Framing is restricted', xFrameOptions ? `X-Frame-Options: ${xFrameOptions}` : 'CSP includes frame-ancestors.', 'Keep the policy aligned with legitimate embedding requirements.');
+  }
+
+  if (getHeader(result, 'x-content-type-options').toLowerCase() !== 'nosniff') {
+    add('low', 'A05', 'MIME sniffing protection is missing', 'X-Content-Type-Options: nosniff was not observed.', 'Return X-Content-Type-Options: nosniff on all responses.');
+  } else {
+    add('pass', 'A05', 'MIME sniffing protection is enabled', 'X-Content-Type-Options: nosniff was observed.', 'Keep accurate Content-Type values on all assets and downloads.');
+  }
+
+  if (!getHeader(result, 'referrer-policy')) {
+    add('low', 'A02', 'Referrer-Policy is missing', 'No Referrer-Policy header was observed.', 'Set strict-origin-when-cross-origin or a stricter policy based on application requirements.');
+  } else {
+    add('pass', 'A02', 'Referrer-Policy is defined', `Observed: ${getHeader(result, 'referrer-policy')}`, 'Verify that sensitive values never appear in URLs.');
+  }
+
+  if (!getHeader(result, 'permissions-policy')) {
+    add('info', 'A05', 'Permissions-Policy is not defined', 'No Permissions-Policy header was observed.', 'Disable browser capabilities the application does not need and explicitly allow required origins.');
+  } else {
+    add('pass', 'A05', 'Permissions-Policy is defined', `Observed ${getHeader(result, 'permissions-policy').length} characters of policy.`, 'Review the allowlist as features and embedded origins change.');
+  }
+
+  if (corsOrigin === '*' && corsCredentials.toLowerCase() === 'true') {
+    add('high', 'A01', 'Credentialed CORS policy trusts every origin', 'Access-Control-Allow-Origin is * and credentials are enabled.', 'Use an explicit server-side allowlist, return a single validated origin, and vary caches by Origin.');
+  } else if (corsOrigin === '*') {
+    add('low', 'A01', 'CORS allows every origin', 'Access-Control-Allow-Origin: * was observed.', 'Confirm the response is intentionally public and contains no user-specific or sensitive data.');
+  } else if (corsOrigin) {
+    add('info', 'A01', 'CORS policy is present', `Access-Control-Allow-Origin: ${corsOrigin}`, 'Validate origin matching server-side and test untrusted, null, and lookalike origins.');
+  }
+
+  const server = headers.server || '';
+  const poweredBy = headers['x-powered-by'] || '';
+  if (server || poweredBy) {
+    add('low', 'A06', 'Technology details are exposed in response headers', [server && `Server: ${server}`, poweredBy && `X-Powered-By: ${poweredBy}`].filter(Boolean).join(' · '), 'Remove unnecessary product and version identifiers; keep component inventory in authenticated tooling instead.');
+  } else {
+    add('pass', 'A06', 'No common server technology header was exposed', 'Server and X-Powered-By identifiers were not observed.', 'Do not rely on obscurity; maintain dependency inventory and patching separately.');
+  }
+
+  const cookies = splitCookies(headers['set-cookie']);
+  for (const cookie of cookies) {
+    const cookieName = cookie.split('=')[0].trim() || 'Cookie';
+    if (final.protocol === 'https:' && !/;\s*secure(?:;|$)/i.test(cookie)) add('medium', 'A02', `${cookieName} cookie lacks Secure`, cookie.slice(0, 220), 'Set Secure on cookies that should only travel over HTTPS.');
+    if (!/;\s*httponly(?:;|$)/i.test(cookie)) add('low', 'A07', `${cookieName} cookie lacks HttpOnly`, cookie.slice(0, 220), 'Set HttpOnly on session and other cookies that do not require JavaScript access.');
+    if (!/;\s*samesite\s*=/i.test(cookie)) add('low', 'A07', `${cookieName} cookie lacks SameSite`, cookie.slice(0, 220), 'Set SameSite=Lax or Strict by default; use None only with Secure for intentional cross-site use.');
+  }
+  if (cookies.length > 0 && !findings.some(item => /cookie lacks/i.test(item.title))) {
+    add('pass', 'A07', 'Observed cookies use baseline security attributes', `${cookies.length} Set-Cookie value${cookies.length === 1 ? '' : 's'} inspected.`, 'Confirm session rotation, scope, expiry, prefixes, and server-side invalidation in authenticated testing.');
+  }
+
+  if (final.protocol === 'https:' && html.mixedContent?.length) {
+    add('high', 'A02', 'HTTPS page references insecure HTTP resources', `${html.mixedContent.length} insecure reference${html.mixedContent.length === 1 ? '' : 's'} found; first: ${html.mixedContent[0]}`, 'Move every resource, form action, and navigation target to HTTPS; consider CSP upgrade-insecure-requests during migration.');
+  } else if (final.protocol === 'https:') {
+    add('pass', 'A02', 'No obvious mixed-content references were found', `${result.bodyBytesInspected || 0} response bytes were inspected.`, 'Also check dynamically generated requests in an instrumented browser session.');
+  }
+
+  if (html.passwordInputCount > 0 && final.protocol !== 'https:') add('high', 'A07', 'Password field is served over HTTP', `${html.passwordInputCount} password input${html.passwordInputCount === 1 ? '' : 's'} observed.`, 'Serve authentication only over HTTPS and enforce secure transport before credentials are entered.');
+  if (html.passwordFormsUsingGet > 0) add('high', 'A07', 'Password form uses GET', `${html.passwordFormsUsingGet} password form${html.passwordFormsUsingGet === 1 ? '' : 's'} may place credentials in URLs.`, 'Submit credentials with POST over HTTPS and keep secrets out of URLs, logs, browser history, and referrers.');
+  if (html.passwordInputCount > 0 && final.protocol === 'https:' && html.passwordFormsUsingGet === 0) add('pass', 'A07', 'Observed password forms use a safer transport baseline', 'Password inputs were served over HTTPS and no GET password form was detected.', 'Test MFA, rate limits, recovery, enumeration resistance, session rotation, and logout with authenticated scenarios.');
+
+  if (html.formsWithoutCsrfToken > 0) {
+    add('medium', 'A01', 'State-changing forms may lack CSRF tokens', `${html.formsWithoutCsrfToken} non-GET form${html.formsWithoutCsrfToken === 1 ? '' : 's'} had no recognizable anti-CSRF field. This is heuristic.`, 'Confirm protection using synchronizer tokens, same-site cookies plus origin validation, or another framework-supported defense.');
+  } else if (html.formCount > 0) {
+    add('pass', 'A01', 'No obvious tokenless state-changing form was found', `${html.formCount} form${html.formCount === 1 ? '' : 's'} inspected.`, 'Verify CSRF defenses server-side; token names and JavaScript-submitted requests may not be visible to this check.');
+  }
+
+  if (html.externalAssetsWithoutSri > 0) {
+    add('medium', 'A08', 'Third-party assets lack Subresource Integrity', `${html.externalAssetsWithoutSri} external script or stylesheet reference${html.externalAssetsWithoutSri === 1 ? '' : 's'} lacked an integrity attribute.`, 'Pin immutable third-party resources with integrity hashes or self-host vetted assets with a controlled update process.');
+  } else if (html.scriptCount > 0) {
+    add('pass', 'A08', 'No third-party asset without SRI was detected', `${html.scriptCount} script tag${html.scriptCount === 1 ? '' : 's'} inspected.`, 'Pair SRI with a restrictive CSP and a documented dependency update process.');
+  }
+
+  if (html.inlineEventHandlerCount > 0) add('low', 'A05', 'Inline event handlers expand the script surface', `${html.inlineEventHandlerCount} inline on* attribute${html.inlineEventHandlerCount === 1 ? '' : 's'} found.`, 'Move handlers to external scripts and use a nonce- or hash-based CSP.');
+  if (html.documentWriteCount > 0) add('medium', 'A03', 'document.write usage was detected', `${html.documentWriteCount} call${html.documentWriteCount === 1 ? '' : 's'} found in the inspected response.`, 'Remove document.write and use safe DOM APIs with context-appropriate encoding.');
+  if (html.evalCount > 0) add('medium', 'A03', 'eval-like execution was detected', `${html.evalCount} eval call${html.evalCount === 1 ? '' : 's'} found in the inspected response.`, 'Eliminate string-to-code execution and use structured parsing or explicit function dispatch.');
+  if (html.directoryListing) add('medium', 'A05', 'Directory listing appears to be enabled', 'The response resembles an auto-generated “Index of” page.', 'Disable directory indexes and explicitly publish only intended files.');
+  if (html.stackTrace) add('medium', 'A05', 'A stack trace may be exposed', 'The response contains patterns associated with runtime stack traces.', 'Return generic production errors to users and keep diagnostic detail in protected logs.');
+  if (html.exposedSourceMapCount > 0) add('low', 'A08', 'Source map references are exposed', `${html.exposedSourceMapCount} sourceMappingURL reference${html.exposedSourceMapCount === 1 ? '' : 's'} found.`, 'Publish source maps only when intentional, and restrict or remove maps that expose proprietary or sensitive source.');
+  if (html.generator) add('low', 'A06', 'Generator metadata exposes implementation details', `Generator: ${html.generator}`, 'Remove unnecessary product and version metadata and verify the disclosed component is fully patched.');
+  if (html.libraryVersions?.length) add('info', 'A06', 'Client library version hints were observed', html.libraryVersions.join(', '), 'Resolve exact versions from lockfiles or an SBOM and compare them with current security advisories.');
+
+  if (result.bodyTruncated) {
+    add('info', 'A05', 'Body inspection was truncated', `The first ${result.bodyBytesInspected} bytes were inspected.`, 'Assess additional routes and assets with purpose-built crawling and authenticated testing.');
+  }
+
+  return [...findings, ...MANUAL_REVIEWS];
+}
+
+function calculateScore(findings) {
+  const deductions = { high: 16, medium: 8, low: 3, info: 0, pass: 0, review: 0 };
+  return Math.max(0, findings.reduce((score, finding) => score - deductions[finding.severity], 100));
+}
+
+function getScoreMeta(score) {
+  if (score >= 90) return { grade: 'Strong observed baseline', color: 'var(--security-pass)' };
+  if (score >= 75) return { grade: 'Improvements recommended', color: 'var(--security-accent)' };
+  if (score >= 55) return { grade: 'Material gaps observed', color: 'var(--security-warning)' };
+  return { grade: 'High-priority remediation', color: 'var(--security-danger)' };
+}
+
+function countSeverities(results) {
+  const counts = { high: 0, medium: 0, low: 0, pass: 0 };
+  for (const result of results) {
+    for (const finding of result.findings || []) {
+      if (counts[finding.severity] !== undefined) counts[finding.severity] += 1;
+    }
+  }
+  return counts;
+}
+
+function renderCoverage() {
+  return OWASP_COVERAGE.map(item => `
+    <div class="coverage-item">
+      <span>${item.id} · ${escapeHtml(item.name)}</span>
+      <span class="coverage-state coverage-${item.state}">${item.label}</span>
+    </div>
+  `).join('');
+}
+
+function renderFinding(finding) {
+  return `
+    <article class="finding">
+      <span class="severity severity-${finding.severity}">${finding.severity}</span>
+      <div>
+        <h4>${escapeHtml(finding.title)}</h4>
+        <div class="finding-meta">${finding.category} · ${escapeHtml(OWASP_COVERAGE.find(item => item.id === finding.category)?.name || 'General')}</div>
+        <p><strong>Evidence:</strong> ${escapeHtml(finding.evidence)}</p>
+        <p><strong>Next step:</strong> ${escapeHtml(finding.recommendation)}</p>
+      </div>
+    </article>
+  `;
+}
+
+function renderReport(results) {
+  const successful = results.filter(result => !result.error);
+  const counts = countSeverities(successful);
+  const averageScore = successful.length
+    ? Math.round(successful.reduce((total, result) => total + result.score, 0) / successful.length)
+    : 0;
+  const summary = `
+    <div class="report-summary" aria-label="Report summary">
+      <div class="summary-cell"><span class="summary-value">${successful.length}</span><span class="summary-label">Targets assessed</span></div>
+      <div class="summary-cell"><span class="summary-value">${averageScore}</span><span class="summary-label">Average score</span></div>
+      <div class="summary-cell"><span class="summary-value">${counts.high}</span><span class="summary-label">High findings</span></div>
+      <div class="summary-cell"><span class="summary-value">${counts.medium}</span><span class="summary-label">Medium findings</span></div>
+    </div>
+  `;
+
+  const targets = results.map(result => {
+    if (result.error) {
+      return `
+        <section class="target-report">
+          <div class="fatal-target"><strong>${escapeHtml(result.requestedUrl)}</strong><br>${escapeHtml(result.error)}</div>
+        </section>
+      `;
+    }
+    const meta = getScoreMeta(result.score);
+    const visibleFindings = showPasses.checked ? result.findings : result.findings.filter(item => item.severity !== 'pass');
+    return `
+      <section class="target-report" style="--score-color: ${meta.color}">
+        <div class="target-header">
+          <div class="score-disc" aria-label="Score ${result.score} out of 100">${result.score}</div>
+          <div class="target-title">
+            <h3 title="${escapeHtml(result.finalUrl)}">${escapeHtml(result.html?.title || result.finalUrl)}</h3>
+            <p>${escapeHtml(result.finalUrl)} · HTTP ${result.status} · ${result.elapsedMs} ms · ${result.redirects.length} redirect${result.redirects.length === 1 ? '' : 's'}</p>
+          </div>
+          <div class="grade-label">${meta.grade}</div>
+        </div>
+        <div class="finding-list">${visibleFindings.map(renderFinding).join('')}</div>
+        <details class="coverage">
+          <summary>OWASP Top 10 coverage</summary>
+          <div class="coverage-grid">${renderCoverage()}</div>
+        </details>
+      </section>
+    `;
+  }).join('');
+
+  reportOutput.innerHTML = summary + targets;
+  reportSubtitle.textContent = `${results.length} target${results.length === 1 ? '' : 's'} · completed ${new Date().toLocaleString()}`;
+  reportShell.classList.remove('d-none');
+  reportText = buildTextReport(results);
+  reportOutput.focus();
+}
+
+function buildTextReport(results) {
+  const lines = [
+    '# OWASP Website Security Check',
+    '',
+    `Generated: ${new Date().toISOString()}`,
+    'Method: Passive, unauthenticated response inspection. No exploit payloads, login attempts, or crawling.',
+    ''
+  ];
+
+  for (const result of results) {
+    lines.push(`## ${result.requestedUrl}`, '');
+    if (result.error) {
+      lines.push(`Assessment error: ${result.error}`, '');
+      continue;
+    }
+    const meta = getScoreMeta(result.score);
+    lines.push(
+      `Final URL: ${result.finalUrl}`,
+      `Observed score: ${result.score}/100 — ${meta.grade}`,
+      `Response: HTTP ${result.status} · ${result.elapsedMs} ms · ${result.redirects.length} redirect(s)`,
+      ''
+    );
+    const visibleFindings = showPasses.checked ? result.findings : result.findings.filter(item => item.severity !== 'pass');
+    for (const finding of visibleFindings) {
+      lines.push(
+        `### [${finding.severity.toUpperCase()}] ${finding.category} — ${finding.title}`,
+        `Evidence: ${finding.evidence}`,
+        `Next step: ${finding.recommendation}`,
+        ''
+      );
+    }
+    lines.push('OWASP Top 10 coverage:');
+    for (const item of OWASP_COVERAGE) lines.push(`- ${item.id} ${item.name}: ${item.label}`);
+    lines.push('');
+  }
+
+  lines.push('Limitations: This point-in-time public response review does not verify application code, authenticated routes, APIs, infrastructure, business logic, authorization boundaries, injection resistance, logging, or server-side request controls. Follow with authenticated testing, code review, dependency scanning, and professional penetration testing as appropriate.');
+  return lines.join('\n');
+}
+
+async function scanUrl(url) {
+  const response = await fetch('/api/security-scan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url,
+      authorized: true,
+      followRedirects: followRedirects.checked
+    })
+  });
+  const data = await response.json().catch(() => ({ error: `The scanner returned HTTP ${response.status}.` }));
+  if (!response.ok) throw new Error(data.error || `The scanner returned HTTP ${response.status}.`);
+  const findings = buildFindings(data);
+  return { ...data, findings, score: calculateScore(findings) };
+}
+
+async function runAssessment() {
+  clearError();
+  let urls;
+  try {
+    urls = normalizeUrls(urlInput.value);
+    if (!authorizationCheck.checked) throw new Error('Confirm that you are authorized to assess every target.');
+  } catch (error) {
+    showError(error.message);
+    return;
+  }
+
+  scanButton.disabled = true;
+  scanButton.querySelector('i').className = 'bi bi-arrow-repeat';
+  scanButton.querySelector('span').textContent = 'Assessing…';
+  statusRegion.classList.remove('d-none');
+  reportShell.classList.add('d-none');
+  statusCount.textContent = `0 / ${urls.length}`;
+  progressFill.style.transform = 'scaleX(0)';
+  progressTrack.setAttribute('aria-valuenow', '0');
+  const results = [];
+
+  for (let index = 0; index < urls.length; index += 1) {
+    const url = urls[index];
+    statusText.textContent = `Inspecting ${new URL(url).hostname}…`;
+    try {
+      results.push(await scanUrl(url));
+    } catch (error) {
+      results.push({ requestedUrl: url, error: error.message });
+    }
+    const completed = index + 1;
+    const percentage = Math.round((completed / urls.length) * 100);
+    statusCount.textContent = `${completed} / ${urls.length}`;
+    progressFill.style.transform = `scaleX(${percentage / 100})`;
+    progressTrack.setAttribute('aria-valuenow', String(percentage));
+  }
+
+  statusText.textContent = 'Assessment complete';
+  scanButton.disabled = false;
+  scanButton.querySelector('i').className = 'bi bi-radar';
+  scanButton.querySelector('span').textContent = 'Run security check';
+  lastResults = results;
+  renderReport(results);
+}
+
+async function copyReport() {
+  if (!reportText) return;
+  const original = copyReportButton.innerHTML;
+  try {
+    await navigator.clipboard.writeText(reportText);
+    copyReportButton.innerHTML = '<i class="bi bi-check2" aria-hidden="true"></i><span>Copied</span>';
+  } catch (_) {
+    const textarea = document.createElement('textarea');
+    textarea.value = reportText;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+    copyReportButton.innerHTML = '<i class="bi bi-check2" aria-hidden="true"></i><span>Copied</span>';
+  }
+  window.setTimeout(() => {
+    copyReportButton.innerHTML = original;
+  }, 1600);
+}
+
+scanButton.addEventListener('click', runAssessment);
+copyReportButton.addEventListener('click', copyReport);
+themeToggleButton.addEventListener('click', toggleTheme);
+urlInput.addEventListener('keydown', event => {
+  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') runAssessment();
+});
+showPasses.addEventListener('change', () => {
+  if (lastResults.length > 0) renderReport(lastResults);
+});
+
+updateThemeUI(localStorage.getItem('theme') || 'auto');
+
+  </script>
+</body>
+</html>
